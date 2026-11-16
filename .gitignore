@@ -1,0 +1,10 @@
+# build output (the setup is published as a GitHub release asset, not committed)
+build/
+*.exe
+*.dll
+*.o
+*.res
+# third-party downloads used by the build (fetched or copied there)
+downloads/
+__pycache__/
+*.pyc
