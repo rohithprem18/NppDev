@@ -1,0 +1,32 @@
+#include <winver.h>
+#include "version.h"            /* written by build.ps1 from the VERSION file */
+
+1 24 "setup.manifest"
+1 ICON "nppdev.ico"             /* the NppDev logo: installer/make-icon.py, same design as docs/logo.svg */
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION VER_MAJOR, VER_MINOR, 0, 0
+PRODUCTVERSION VER_MAJOR, VER_MINOR, 0, 0
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_APP
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904B0"
+    BEGIN
+      VALUE "CompanyName", "Rohith Prem"
+      VALUE "FileDescription", "NppDev Setup - Notepad++ Dev Edition"
+      VALUE "FileVersion", VER_TEXT
+      VALUE "InternalName", "NppDev-Setup"
+      VALUE "OriginalFilename", "NppDev-Setup.exe"
+      VALUE "ProductName", "NppDev - Notepad++ Dev Edition"
+      VALUE "ProductVersion", VER_TEXT
+      VALUE "LegalCopyright", "Copyright (C) Rohith Prem. GPL-3.0. Bundles Notepad++ (GPL, by Don Ho) unchanged."
+      VALUE "Comments", "https://github.com/rohithprem18/NppDev"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x0409, 1200
+  END
+END
