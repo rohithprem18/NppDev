@@ -4,6 +4,9 @@
  *
  *   NppDev-Setup.exe                     install with a small window
  *   NppDev-Setup.exe /S [/D=folder]      install silently (default folder: %LOCALAPPDATA%\Programs\NppDev)
+ *   NppDev-Setup.exe /auto /wait=<pid> /D=folder
+ *                                        update from inside NppDev: wait until that NppDev has closed, then
+ *                                        install with the window showing progress, and start NppDev again
  *   uninstall.exe /uninstall [/S]        remove it (files you made and installed compilers are left alone)
  *   (internal) /cleanup <pid> <folder>   a temp copy of the uninstaller removes the folder once it has exited
  *
@@ -35,6 +38,7 @@
 #define UNINSTALL_KEY L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\NppDev"
 #define WM_STEP      (WM_APP + 1)     /* wParam: percent, lParam: status text (static string) */
 #define WM_DONE      (WM_APP + 2)     /* wParam: 1 = installed */
+#define WM_CLOSED    (WM_APP + 3)     /* /auto: the NppDev being updated has closed */
 
 enum { IDC_DIR = 100, IDC_BROWSE, IDC_DESKTOP, IDC_LAUNCH, IDC_PROGRESS, IDC_STATUS, IDC_INSTALL };
 
@@ -45,6 +49,9 @@ static wchar_t installDir[MAX_PATH], selfPath[MAX_PATH], failText[512];
 static wchar_t oldVersion[32];             /* the NppDev version already installed, "" if none */
 static int creepTo, stepAt;                 /* the bar keeps moving towards creepTo during long steps */
 static bool silent, wantDesktop = true, wantLaunch = true;
+static bool autoMode;                       /* /auto: updating from inside NppDev, no clicks needed */
+static DWORD waitPid;                       /* /wait=<pid>: the NppDev that has to close first */
+static volatile bool waitCancelled;
 static HWND mainWnd, dirEdit, statusText, progress, installBtn, cancelBtn, browseBtn, desktopBox, launchBox;
 static HFONT uiFont;
 
@@ -499,13 +506,30 @@ static void launchApp(void)
     ShellExecuteW(NULL, L"open", exe, NULL, installDir, SW_SHOWNORMAL);
 }
 
+/* /auto: wait (as long as it takes, Cancel stops it) until the NppDev being updated has closed. */
+static DWORD WINAPI waitThread(LPVOID unused)
+{
+    (void)unused;
+    HANDLE p = OpenProcess(SYNCHRONIZE, FALSE, waitPid);
+    if (p) {
+        while (!waitCancelled && WaitForSingleObject(p, 300) == WAIT_TIMEOUT) { }
+        CloseHandle(p);
+    }
+    if (!waitCancelled) PostMessageW(mainWnd, WM_CLOSED, 0, 0);
+    return 0;
+}
+
 static LRESULT CALLBACK wndProc(HWND h, UINT msg, WPARAM w, LPARAM l)
 {
     switch (msg) {
     case WM_COMMAND:
         if (LOWORD(w) == IDC_BROWSE) browse();
         else if (LOWORD(w) == IDC_INSTALL) startInstall();
-        else if (LOWORD(w) == IDCANCEL) DestroyWindow(h);
+        else if (LOWORD(w) == IDCANCEL) { waitCancelled = true; DestroyWindow(h); }
+        return 0;
+    case WM_CLOSED:
+        Sleep(500);                                        /* let it finish writing its settings */
+        startInstall();
         return 0;
     case WM_STEP:
         stepAt = (int)w;
@@ -565,6 +589,8 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, LPWSTR cmdLine, int show)
         if (_wcsicmp(argv[i], L"/S") == 0) silent = true;
         else if (_wcsicmp(argv[i], L"/uninstall") == 0) doUninstall = true;
         else if (_wcsicmp(argv[i], L"/nolaunch") == 0) wantLaunch = false;
+        else if (_wcsicmp(argv[i], L"/auto") == 0) autoMode = true;
+        else if (_wcsnicmp(argv[i], L"/wait=", 6) == 0) waitPid = (DWORD)wcstoul(argv[i] + 6, NULL, 10);
     }
     /* /D=folder comes last and runs to the end of the line, spaces included (as in other installers) */
     const wchar_t *d = wcsstr(GetCommandLineW(), L" /D=");
@@ -632,6 +658,22 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, LPWSTR cmdLine, int show)
     cancelBtn = child(L"BUTTON", L"Cancel", BS_PUSHBUTTON | WS_TABSTOP, S(412), S(276), S(88), S(28), IDCANCEL);
     ShowWindow(mainWnd, SW_SHOW);
     SetFocus(installBtn);
+    if (autoMode) {                                        /* updating from NppDev: no clicks */
+        SetWindowTextW(mainWnd, L"Updating NppDev to " APP_VERSION);
+        EnableWindow(installBtn, FALSE); EnableWindow(browseBtn, FALSE); EnableWindow(dirEdit, FALSE);
+        EnableWindow(desktopBox, FALSE); EnableWindow(launchBox, FALSE);
+        wchar_t lnk[MAX_PATH];                             /* keep the desktop shortcut only if it's still there */
+        if (SHGetSpecialFolderPathW(NULL, lnk, CSIDL_DESKTOPDIRECTORY, FALSE)) {
+            wcscat(lnk, L"\\" APP_NAME L".lnk");
+            SendMessageW(desktopBox, BM_SETCHECK, exists(lnk) ? BST_CHECKED : BST_UNCHECKED, 0);
+        }
+        SendMessageW(launchBox, BM_SETCHECK, BST_CHECKED, 0);
+        if (waitPid) {
+            SetWindowTextW(statusText, L"Waiting for NppDev to close... (if it asks, save your files)");
+            HANDLE t = CreateThread(NULL, 0, waitThread, NULL, 0, NULL);
+            if (t) CloseHandle(t);
+        } else PostMessageW(mainWnd, WM_CLOSED, 0, 0);
+    }
 
     MSG m;
     while (GetMessageW(&m, NULL, 0, 0)) {

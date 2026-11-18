@@ -173,6 +173,10 @@ void welcomeOnNotify(SciNotifyHeader *n);
 bool welcomeNewFileRequested(void);                               /* File > New / Ctrl+N; true = handled (no new tab) */
 void welcomeCloseRequested(void);                                 /* File > Close / Ctrl+W */
 
+/* ---- updates (update.c) ---- */
+void updateCheckAtStartup(void);                                  /* once a day, quietly, installed NppDev only */
+void updateCheckNow(void);                                        /* Plugins > Dev Tools > Check for Updates... */
+
 /* ---- pickers (picker.c) ---- */
 void quickOpen(void);
 void commandPalette(void);

@@ -58,8 +58,8 @@ foreach ($f in @(@('plugin', 'NppDev Dev Tools plugin for Notepad++', 'RecentFol
     & $windres -I $build -I $plugin (Join-Path $build "$($f[0])-info.rc") -O coff -o (Join-Path $build "$($f[0])-info.res")
     if ($LASTEXITCODE) { throw "version info ($($f[0])) failed" }
 }
-& $gcc -O2 -Wall -shared -municode -o (Join-Path $build 'RecentFolders.dll') (Join-Path $plugin 'RecentFolders.c') (Join-Path $plugin 'runpanel.c') (Join-Path $plugin 'picker.c') (Join-Path $plugin 'explorer.c') (Join-Path $plugin 'welcome.c') `
-    (Join-Path $build 'plugin-info.res') -luser32 -lgdi32 -lcomctl32 -lshell32 -lole32 -luuid -static-libgcc
+& $gcc -O2 -Wall -shared -municode -o (Join-Path $build 'RecentFolders.dll') (Join-Path $plugin 'RecentFolders.c') (Join-Path $plugin 'runpanel.c') (Join-Path $plugin 'picker.c') (Join-Path $plugin 'explorer.c') (Join-Path $plugin 'welcome.c') (Join-Path $plugin 'update.c') -I $build `
+    (Join-Path $build 'plugin-info.res') -luser32 -lgdi32 -lcomctl32 -lshell32 -lole32 -luuid -lwinhttp -lbcrypt -static-libgcc
 if ($LASTEXITCODE) { throw 'plugin build failed' }
 & $gcc -O2 -Wall -municode -mwindows -o (Join-Path $build 'pyrun.exe') (Join-Path $plugin 'pyrun.c') (Join-Path $build 'pyrun-info.res') -lversion -lshlwapi -static-libgcc
 if ($LASTEXITCODE) { throw 'pyrun build failed' }

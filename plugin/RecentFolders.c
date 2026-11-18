@@ -37,7 +37,8 @@
 #define FN_THEMEDARK (MAX_SLOTS + 14)   /* Color Theme: Dark / Light (also in the Command Palette) */
 #define FN_THEMELIGHT (MAX_SLOTS + 15)
 #define FN_EXPLORER  (MAX_SLOTS + 16)   /* Toggle Explorer: toolbar button, Ctrl+B */
-#define FN_COUNT     (MAX_SLOTS + 17)
+#define FN_UPDATE    (MAX_SLOTS + 17)   /* Check for Updates... */
+#define FN_COUNT     (MAX_SLOTS + 18)
 #define IDM_VIEW_FILEBROWSER           44085   /* View > Folder as Workspace */
 #define IDM_FILEBROWSER_REMOVEROOT     3511    /* panel right-click > Remove (selected root) */
 #define PLUGIN_NAME L"Dev Tools"
@@ -52,6 +53,7 @@
 #define LISTONLY_TIMER_ID 0x5248    /* once, a few seconds after start */
 #define FIRSTRUN_TIMER_ID 0x5249    /* NppDev: check the tools once the window is up (every start) */
 #define WARMUP_TIMER_ID 0x524A      /* once, a few seconds after start: prepare the precompiled C++ header */
+#define UPDATE_TIMER_ID 0x524B      /* once, 20 s after start: look for a newer NppDev (at most daily) */
 #define IDC_NAME_LABEL  1001
 #define IDC_NAME_EDIT   1002
 
@@ -1520,6 +1522,7 @@ static LRESULT CALLBACK nppProc(HWND h, UINT msg, WPARAM w, LPARAM l)
     if (msg == WM_TIMER && w == LISTONLY_TIMER_ID) { KillTimer(h, LISTONLY_TIMER_ID); runScript(L"-ListOnly"); return 0; }
     if (msg == WM_TIMER && w == FIRSTRUN_TIMER_ID) { KillTimer(h, FIRSTRUN_TIMER_ID); openToolsWindow(true); return 0; }
     if (msg == WM_TIMER && w == WARMUP_TIMER_ID) { KillTimer(h, WARMUP_TIMER_ID); warmUpRunner(); return 0; }
+    if (msg == WM_TIMER && w == UPDATE_TIMER_ID) { KillTimer(h, UPDATE_TIMER_ID); updateCheckAtStartup(); return 0; }
     return CallWindowProcW(oldNppProc, h, msg, w, l);
 }
 
@@ -1968,6 +1971,8 @@ __declspec(dllexport) void setInfo(NppData data)
     funcs[FN_THEMELIGHT]._pFunc = colorThemeLight;
     wcscpy(funcs[FN_EXPLORER]._itemName, L"Toggle Explorer\tCtrl+B");
     funcs[FN_EXPLORER]._pFunc = toggleExplorer;
+    wcscpy(funcs[FN_UPDATE]._itemName, L"Check for Updates...");
+    funcs[FN_UPDATE]._pFunc = updateCheckNow;
     if (bundleMode) {
         funcs[FN_DUPLINE]._pShKey = &dupLineKey;
         funcs[FN_CARETUP]._pShKey = &caretUpKey;
@@ -2307,6 +2312,7 @@ __declspec(dllexport) void beNotified(SciNotifyHeader *notify)
         SetTimer(npp._nppHandle, STARTUP_TIMER_ID, 50, NULL);
         if (bundleMode) SetTimer(npp._nppHandle, FIRSTRUN_TIMER_ID, 2500, NULL);   /* the window opens only if a tool is missing */
         SetTimer(npp._nppHandle, WARMUP_TIMER_ID, 4000, NULL);
+        if (bundleMode) SetTimer(npp._nppHandle, UPDATE_TIMER_ID, 20000, NULL);
     }
     if (notify->code == NPPN_BEFORESHUTDOWN && notify->hwndFrom == npp._nppHandle && !filesStashed) {
         wchar_t cur[MAX_PATH];

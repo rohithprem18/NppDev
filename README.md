@@ -185,6 +185,10 @@ console.log(a.slice(0, n).reduce((s, x) => s + x, 0));
 
 **Themes:** type `theme` in the Command Palette and pick **Color Theme: Dark** or **Light**.
 
+**Updates:** NppDev looks for a new release once a day. When there is one, it shows what's new and offers
+**Update now** — it downloads the setup, checks it against GitHub's SHA-256, closes, updates itself and opens
+again with your settings and files. Check any time with *Plugins → Dev Tools → Check for Updates…*.
+
 **Tools:** *Plugins → Dev Tools → Check / Install Tools* shows every compiler and language server, installs
 missing ones, and lets you pick a version when several are installed.
 
@@ -202,12 +206,12 @@ missing ones, and lets you pick a version when several are installed.
 - [x] Snippets and VS Code key bindings
 - [x] Automatic install of compilers and language servers
 - [x] One-line install without SmartScreen warnings
+- [x] Update check inside NppDev, with one-click updates
 
 **Next**
 - [ ] Multiple test cases per file: several Input / Expected pairs, run all with one key
 - [ ] Import sample tests from Codeforces, AtCoder and LeetCode problem pages
 - [ ] Time and memory limits per file, with memory usage in the verdict
-- [ ] Update check inside NppDev: get notified when a new release is out
 - [ ] Your own snippets, editable from the Command Palette
 - [ ] winget package and a code-signed setup
 
