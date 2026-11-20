@@ -44,7 +44,7 @@ export async function checkForUpdate(manual = false) {
     .map((l) => l.replace(/^[#>*\-\s]+/, "").replace(/[*_`]/g, "").trim()).filter(Boolean).slice(0, 3).join(" ");
   const choice = await app.ask({
     title: `NppDev ${latest} is available`,
-    message: `You have ${current}.${notes ? " " + notes : ""} Updating closes NppDev and opens the new version.`,
+    message: `You have ${current}.${notes ? " " + notes : ""} ${navigator.userAgent.includes("Windows") ? "Updating closes NppDev and opens the new version." : "The update installs in a terminal; restart NppDev afterwards."}`,
     // the last button is what Escape picks: Later, never Skip
     buttons: [{ label: "Update now", value: "update", primary: true }, { label: "Skip this version", value: "skip" }, { label: "Later", value: "cancel" }],
   });
@@ -52,7 +52,9 @@ export async function checkForUpdate(manual = false) {
   if (choice === "update") {
     try {
       await invoke("start_update", { url: release.html_url ?? `https://github.com/${REPO}/releases/latest` });
-      await getCurrentWindow().close(); // asks about unsaved files first; the installer waits for NppDev to close
+      // Windows: the installer waits for NppDev to close (unsaved files are asked about first).
+      // Ubuntu: apt updates it in place in a terminal; the new version starts next time.
+      if (navigator.userAgent.includes("Windows")) await getCurrentWindow().close();
     } catch (e) {
       app.notify(`The update couldn't start: ${e}`, "error");
     }

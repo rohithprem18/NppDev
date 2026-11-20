@@ -40,6 +40,18 @@ fn start_update(url: String) -> Result<(), String> {
     }
     #[cfg(not(windows))]
     {
+        // a terminal running the one-line installer (apt asks for the password there); the new
+        // version is used the next time NppDev starts
+        let script = "curl -fsSL https://raw.githubusercontent.com/rohithprem18/NppDev/main/install.sh | bash; echo; read -r -p 'Press Enter to close. Restart NppDev to use the new version.' _";
+        let terminals: [(&str, &[&str]); 4] = [
+            ("x-terminal-emulator", &["-e", "bash", "-c"]),
+            ("gnome-terminal", &["--", "bash", "-c"]),
+            ("konsole", &["-e", "bash", "-c"]),
+            ("xterm", &["-e", "bash", "-c"]),
+        ];
+        for (term, args) in terminals {
+            if std::process::Command::new(term).args(args).arg(script).spawn().is_ok() { return Ok(()); }
+        }
         std::process::Command::new("xdg-open").arg(&url).spawn().map(|_| ()).map_err(|e| e.to_string())
     }
 }

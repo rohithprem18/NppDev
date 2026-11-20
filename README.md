@@ -32,7 +32,17 @@
 irm https://raw.githubusercontent.com/rohithprem18/NppDev/main/install.ps1 | iex
 ```
 
-<p align="center"><sub>Installs the latest release for your user (no administrator rights), verified against GitHub's SHA-256. Ubuntu: see <a href="#installation">Installation</a>.</sub></p>
+<div align="center">
+
+**Ubuntu**: paste into a terminal:
+
+</div>
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/rohithprem18/NppDev/main/install.sh | bash
+```
+
+<p align="center"><sub>Both install the latest release, verified against GitHub's SHA-256. Run again to update.</sub></p>
 
 <details>
   <summary>Table of Contents</summary>
@@ -92,13 +102,13 @@ To keep NppDev on the taskbar, right-click its taskbar icon and choose **Pin to 
 
 ### Ubuntu 22.04 and newer
 
-Download `NppDev_<version>_amd64.deb` from the [latest release](https://github.com/rohithprem18/NppDev/releases/latest), then:
+Paste into a terminal:
 
 ```sh
-sudo apt install ./NppDev_*_amd64.deb
+curl -fsSL https://raw.githubusercontent.com/rohithprem18/NppDev/main/install.sh | bash
 ```
 
-Or download the `.AppImage`, make it executable (`chmod +x NppDev_*.AppImage`) and run it.
+It downloads the `.deb` from the latest release, checks it against GitHub's SHA-256 and installs it with apt (it asks for your password once). Run it again to update; remove NppDev with `sudo apt remove nppdev`. There's also an `.AppImage` on the [releases page](https://github.com/rohithprem18/NppDev/releases/latest).
 
 ### Compilers
 
