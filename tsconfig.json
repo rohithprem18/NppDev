@@ -11,7 +11,7 @@
     "isolatedModules": true,
     "noUncheckedSideEffectImports": false,
     "types": ["vite/client"],
-    "paths": { "@monaco/*": ["./node_modules/monaco-editor/esm/vs/*"] }
+    "paths": { "@monaco/*": ["./node_modules/monaco-editor/esm/vs/*"], "@monaco-lsp": ["./node_modules/monaco-editor/esm/external/monaco-lsp-client/out/index.d.ts"] }
   },
   "include": ["src"]
 }

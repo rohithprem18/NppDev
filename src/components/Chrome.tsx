@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { useApp } from "../store";
 import { useRun } from "../run";
 import { useImport } from "../import";
+import { usePalette } from "./Palette";
 import { baseName } from "../lib/api";
 import { fileType, LANGUAGE_NAMES } from "../lib/fileTypes";
 import { Icon } from "./Icons";
@@ -16,6 +17,7 @@ export function ActivityBar() {
       <button className={runOpen ? "active" : ""} title="Run & test cases (Ctrl+Shift+B)" onClick={() => toggleRun()}>{Icon.beaker(22)}</button>
       <button title="Import problem (Ctrl+I)" onClick={() => useImport.getState().show(true)}>{Icon.download(22)}</button>
       <div className="grow" />
+      <button title="Command Palette (Ctrl+Shift+P)" onClick={() => usePalette.getState().show(">")}>{Icon.command(20)}</button>
       <button title={theme === "dark" ? "Light theme" : "Dark theme"} onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
         {theme === "dark" ? Icon.sun(20) : Icon.moon(20)}
       </button>

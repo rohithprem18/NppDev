@@ -8,6 +8,7 @@ import { EditorArea } from "./components/EditorArea";
 import { invoke } from "@tauri-apps/api/core";
 import { RunPanel } from "./components/RunPanel";
 import { ImportDialog } from "./components/ImportDialog";
+import { Palette, usePalette } from "./components/Palette";
 import { useImport } from "./import";
 import { useRun } from "./run";
 import { ActivityBar, StatusBar, ConfirmDialog, Toast } from "./components/Chrome";
@@ -32,8 +33,16 @@ export default function App() {
     const onKey = (e: KeyboardEvent) => {
       const s = useApp.getState();
       const ctrl = e.ctrlKey || e.metaKey;
+      if (e.key === "F1") { e.preventDefault(); e.stopPropagation(); usePalette.getState().show(">"); return; }
       if (!ctrl) return;
       const k = e.key.toLowerCase();
+      if (k === "p" || (k === "e" && !e.shiftKey)) { e.preventDefault(); e.stopPropagation(); usePalette.getState().show(e.shiftKey ? ">" : ""); return; }
+      if (!e.shiftKey && !e.altKey && (k === "=" || k === "+" || k === "-" || k === "0")) {
+        e.preventDefault(); e.stopPropagation();
+        const s0 = useApp.getState();
+        s0.setFontSize(k === "0" ? 15 : s0.fontSize + (k === "-" ? -1 : 1));
+        return;
+      }
       if (k === "i" && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); useImport.getState().show(true); return; }
       if (k === "enter") { e.preventDefault(); e.stopPropagation(); useRun.getState().run(); return; }
       if (k === "s" && !e.shiftKey) { e.preventDefault(); s.save(); }
@@ -107,6 +116,7 @@ export default function App() {
       </div>
       <StatusBar />
       <ImportDialog />
+      <Palette />
       <ConfirmDialog />
       <Toast />
     </div>

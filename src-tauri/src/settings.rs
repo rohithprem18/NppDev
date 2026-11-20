@@ -25,3 +25,10 @@ pub fn save_settings(app: AppHandle, json: String) -> Result<(), String> {
     fs::write(&tmp, json).map_err(|e| e.to_string())?;
     fs::rename(&tmp, &f).map_err(|e| e.to_string())
 }
+
+/// Where the user's own snippets live (snippets.json next to settings.json).
+#[tauri::command]
+pub fn user_snippets_path(app: AppHandle) -> Result<String, String> {
+    let f = file(&app)?;
+    Ok(f.with_file_name("snippets.json").to_string_lossy().into_owned())
+}

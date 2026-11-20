@@ -105,3 +105,28 @@ pub fn reveal(path: String) -> Result<(), String> {
     let r = std::process::Command::new("xdg-open").arg(if p.is_dir() { p.clone() } else { p.parent().map(Path::to_path_buf).unwrap_or(p.clone()) }).spawn();
     r.map(|_| ()).map_err(|e| e.to_string())
 }
+
+/// Every file under a folder (Quick Open), relative paths with forward slashes; at most 20 000.
+#[tauri::command]
+pub async fn list_files(root: String) -> Vec<String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let base = std::path::PathBuf::from(&root);
+        let mut out = Vec::new();
+        let mut stack = vec![base.clone()];
+        while let Some(dir) = stack.pop() {
+            let Ok(rd) = fs::read_dir(&dir) else { continue };
+            for e in rd.flatten() {
+                let name = e.file_name().to_string_lossy().into_owned();
+                let Ok(ft) = e.file_type() else { continue };
+                if ft.is_dir() {
+                    if !HIDDEN.contains(&name.as_str()) && !name.starts_with('.') { stack.push(e.path()); }
+                } else if let Ok(rel) = e.path().strip_prefix(&base) {
+                    out.push(rel.to_string_lossy().replace('\\', "/"));
+                    if out.len() >= 20_000 { return out; }
+                }
+            }
+        }
+        out.sort_by_key(|p| p.to_lowercase());
+        out
+    }).await.unwrap_or_default()
+}

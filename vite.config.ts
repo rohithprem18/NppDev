@@ -3,11 +3,12 @@ import react from "@vitejs/plugin-react";
 import { fileURLToPath } from "node:url";
 
 const monaco = fileURLToPath(new URL("./node_modules/monaco-editor/esm/vs/", import.meta.url));
+const monacoLsp = fileURLToPath(new URL("./node_modules/monaco-editor/esm/external/monaco-lsp-client/out/index.js", import.meta.url));
 
 // https://v2.tauri.app/start/frontend/vite/
 export default defineConfig({
   plugins: [react()],
-  resolve: { alias: [{ find: /^@monaco\//, replacement: monaco }] },
+  resolve: { alias: [{ find: /^@monaco\//, replacement: monaco }, { find: /^@monaco-lsp$/, replacement: monacoLsp }] },
   clearScreen: false,
   server: { port: 1420, strictPort: true, watch: { ignored: ["**/src-tauri/**"] } },
   envPrefix: ["VITE_", "TAURI_ENV_"],

@@ -51,7 +51,7 @@ OS                         Windows: WebView2 · Ubuntu: WebKitGTK
 - [x] **M2 — run & judge**: Run panel; C, C++, Java, Python, JavaScript (+ Go, Rust, Kotlin, C#);
       multiple test cases per file; Accepted / Wrong answer (diff) / Runtime error / TLE / MLE / CE;
       time & memory limits; compile cache; C++ PCH.
-- [ ] **M3 — editing**: LSP IntelliSense (clangd, jdtls, pylsp, TypeScript); built-in + user snippets;
+- [x] **M3 — editing**: LSP IntelliSense (clangd, jdtls, pylsp, TypeScript); built-in + user snippets;
       Command Palette; Quick Open; VS Code keys.
 - [x] **M4 — problem import**: Competitive Companion listener; import by URL for Codeforces, AtCoder, HackerRank, HackerEarth, NeetCode,
       CodeChef, GeeksforGeeks, LeetCode; creates the file + test cases.
@@ -77,3 +77,12 @@ OS                         Windows: WebView2 · Ubuntu: WebKitGTK
   GfG practice API, HackerRank REST (STDIN/Function notes stripped), HackerEarth (Next.js payload)).
   `cargo test --lib import -- --ignored` checks all 8 sites live. UI: Ctrl+I dialog, src/import.ts,
   src/lib/templates.ts (9 languages). Tested in the app: Codeforces link + simulated CC POST.
+- 2026-11-20 — UI redesigned to docs/DESIGN.md (Vercel-inspired: ink/gray, hairlines, stacked shadows,
+  Geist + Geist Mono bundled, Hack stays the code font, 6px radius, no emoji). Every later UI change
+  must follow docs/DESIGN.md.
+- 2026-11-20 — M3 done: src-tauri/src/lsp.rs (stdio bridge for clangd, pylsp, jdtls) + src/lib/lsp.ts
+  (Monaco's built-in LSP client; transport filters each server to its own files, re-spells file URIs,
+  gives clangd a g++ compile command per file). Verified: clangd diagnostics in the app.
+  Command Palette (Ctrl+Shift+P / F1) and Quick Open (Ctrl+P) in src/components/Palette.tsx; built-in
+  CP snippets + user snippets.json (Preferences: Edit My Snippets). Font zoom Ctrl+= / Ctrl+- / Ctrl+0.
+  Not yet verified by hand: pylsp, jdtls (needs jdtls in app data tools/, M5 installs it), snippets UI.

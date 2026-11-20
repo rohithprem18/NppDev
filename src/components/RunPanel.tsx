@@ -118,17 +118,17 @@ export function RunPanel() {
   return (
     <aside className="run-panel" style={{ width: st.width }}>
       <div className="side-header">
-        RUN · {baseName(active)}
+        Run <span className="side-file">{baseName(active)}</span>
         <div className="side-actions"><button title="Close" onClick={() => st.toggle(false)}>{Icon.close(14)}</button></div>
       </div>
 
       <div className="run-toolbar">
         {st.running
           ? <button className="btn danger run-btn" onClick={st.stop}>{Icon.stop(12)} Stop</button>
-          : <button className="btn primary run-btn" onClick={() => st.run()} title="Run all tests (Ctrl+Enter)">{Icon.run(12)} Run all <kbd>Ctrl+Enter</kbd></button>}
+          : <button className="btn primary run-btn" onClick={() => st.run()} title="Run all tests (Ctrl+Enter)">{Icon.run(12)} Run all</button>}
         <div className="limits">
-          <label title="Time limit per test">⏱<input type="number" min={100} step={500} value={st.timeLimitMs} onChange={(e) => st.setLimits(+e.target.value, st.memoryLimitMb)} />ms</label>
-          <label title="Memory limit">▦<input type="number" min={16} step={64} value={st.memoryLimitMb} onChange={(e) => st.setLimits(st.timeLimitMs, +e.target.value)} />MB</label>
+          <label title="Time limit per test"><input type="number" min={100} step={500} value={st.timeLimitMs} onChange={(e) => st.setLimits(+e.target.value, st.memoryLimitMb)} />ms</label>
+          <label title="Memory limit"><input type="number" min={16} step={64} value={st.memoryLimitMb} onChange={(e) => st.setLimits(st.timeLimitMs, +e.target.value)} />MB</label>
         </div>
       </div>
 

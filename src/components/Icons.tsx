@@ -30,6 +30,7 @@ export const Icon = {
   sun: (s?: number) => S(<><circle cx="8" cy="8" r="3" /><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M12 12l1 1M3 13l1-1M12 4l1-1" /></>, s),
   moon: (s?: number) => S(<path d="M13.5 9.5A5.5 5.5 0 0 1 6.5 2.5a5.5 5.5 0 1 0 7 7z" />, s),
   folderOpen: (s?: number) => S(<><path d="M1.5 4.5v8a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-6.5a1 1 0 0 0-1-1h-6l-1.5-2h-3.5a1 1 0 0 0-1 1z" /></>, s),
+  command: (s?: number) => S(<><rect x="2" y="2.5" width="12" height="11" rx="2" /><path d="M5 6.5l2 1.5-2 1.5M8.5 10h2.5" /></>, s),
   stop: (s?: number) => S(<rect x="3.5" y="3.5" width="9" height="9" rx="1.5" fill="currentColor" stroke="none" />, s),
   plus: (s?: number) => S(<path d="M8 3v10M3 8h10" />, s),
   trash: (s?: number) => S(<><path d="M2.5 4h11M6 4V2.5h4V4M4 4l.7 9.5h6.6L12 4" /><path d="M6.8 6.5v4.5M9.2 6.5v4.5" /></>, s),

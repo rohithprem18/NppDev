@@ -1,5 +1,6 @@
 mod fs;
 mod import;
+mod lsp;
 mod runner;
 mod settings;
 mod tests;
@@ -21,6 +22,10 @@ pub fn run() {
             import::import_problem,
             import::companion_port,
             fs::list_dir,
+            fs::list_files,
+            lsp::lsp_start,
+            lsp::lsp_send,
+            lsp::lsp_stop,
             fs::read_text,
             fs::write_text,
             fs::create_file,
@@ -31,6 +36,7 @@ pub fn run() {
             fs::reveal,
             settings::load_settings,
             settings::save_settings,
+            settings::user_snippets_path,
             runner::run_tests,
             runner::stop_run,
             runner::warm_up,
@@ -38,6 +44,9 @@ pub fn run() {
             tests::save_tests,
             tools::list_tools,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running NppDev");
+        .build(tauri::generate_context!())
+        .expect("error while starting NppDev")
+        .run(|_, event| {
+            if let tauri::RunEvent::Exit = event { lsp::stop_all(); }
+        });
 }

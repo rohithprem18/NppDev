@@ -26,7 +26,7 @@ export function Welcome() {
           <img src={logo} width={64} height={64} alt="" />
           <div>
             <h1>NppDev</h1>
-            <p>Write, run and judge your code — fast.</p>
+            <p>Write, run and judge your code.</p>
           </div>
         </div>
         <div className="welcome-cols">

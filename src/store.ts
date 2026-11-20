@@ -3,6 +3,9 @@ import { create } from "zustand";
 import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
 import { api, baseName } from "./lib/api";
 import * as ws from "./lib/workspace";
+import { fileType } from "./lib/fileTypes";
+import { ensureLsp, stopAllLsp, onLspProblem } from "./lib/lsp";
+import { loadUserSnippets, registerSnippets, userSnippetsPath } from "./lib/snippets";
 
 export type Theme = "dark" | "light";
 
@@ -65,6 +68,7 @@ interface State extends Persisted {
   setCursor(line: number, col: number): void;
   setSidebarWidth(w: number): void;
   setDefaultLang(id: string): void;
+  setFontSize(size: number): void;
 }
 
 const DEFAULTS: Persisted = { theme: "dark", recent: [], lastFolder: null, sessions: {}, sidebarWidth: 260, fontSize: 15, defaultLang: "cpp" };
@@ -107,6 +111,9 @@ export const useApp = create<State>((set, get) => {
       let saved: Partial<Persisted> = {};
       try { saved = JSON.parse(await api.loadSettings()); } catch { /* first start */ }
       set({ ...DEFAULTS, ...saved, ready: true });
+      onLspProblem((text) => get().notify(text));
+      registerSnippets();
+      loadUserSnippets();
       document.documentElement.dataset.theme = get().theme;
       if (saved.lastFolder && (await api.pathExists(saved.lastFolder))) await get().openFolder(saved.lastFolder);
     },
@@ -130,6 +137,7 @@ export const useApp = create<State>((set, get) => {
         return;
       }
       rememberSession();
+      if (path !== get().folder) stopAllLsp();
       // close the old folder's saved tabs (unsaved ones stay open)
       for (const t of get().tabs) if (!ws.isDirty(t.path)) ws.closeDoc(t.path);
       const keep = get().tabs.filter((t) => ws.isDirty(t.path));
@@ -153,6 +161,7 @@ export const useApp = create<State>((set, get) => {
       if (!get().tabs.some((t) => t.path === path)) {
         try { await ws.openDoc(path); } catch (e) { get().notify(String(e), "error"); return; }
         set((s) => ({ tabs: [...s.tabs, { path, name: baseName(path) }] }));
+        ensureLsp(fileType(baseName(path)).lang, get().folder);
       }
       get().activate(path);
     },
@@ -198,7 +207,11 @@ export const useApp = create<State>((set, get) => {
       path = path ?? get().active ?? undefined;
       if (!path) return;
       if (ws.isUntitled(path)) return get().saveAs(path);
-      try { await ws.saveDoc(path); } catch (e) { get().notify(String(e), "error"); }
+      try { await ws.saveDoc(path); } catch (e) { get().notify(String(e), "error"); return; }
+      if (path === userSnippetsPath()) {
+        const err = await loadUserSnippets();
+        get().notify(err ?? "Snippets reloaded.", err ? "error" : "info");
+      }
     },
 
     async saveAs(path) {
@@ -257,6 +270,10 @@ export const useApp = create<State>((set, get) => {
 
     toggleSidebar: () => set((s) => ({ sidebarVisible: !s.sidebarVisible })),
     setCursor: (line, col) => set({ cursor: { line, col } }),
+    setFontSize(size) {
+      set({ fontSize: Math.max(9, Math.min(32, Math.round(size))) });
+      persist();
+    },
     setDefaultLang(defaultLang) {
       set({ defaultLang });
       persist();
