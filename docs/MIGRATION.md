@@ -11,7 +11,7 @@ reading this file, continues the first unchecked item, tests it, commits, and ti
 - **Fast and small**: no unused dependencies or bundled files; measure startup and size.
 - UI/UX: modern, clear, easy to understand (VS Code-like layout, NppDev's own look).
 - Install stays the one-line `irm … | iex` (Windows) plus `curl … | bash` (Ubuntu). **No code signing** work.
-- Problem import: **Codeforces, AtCoder, CodeChef, GeeksforGeeks, LeetCode** (+ Competitive Companion).
+- Problem import: **Codeforces, AtCoder, CodeChef, GeeksforGeeks, LeetCode, HackerRank, HackerEarth, NeetCode** (+ Competitive Companion).
 - Roadmap items to build (all except code signing / winget).
 - Commits: author rohithprem18, **no co-author or Claude attribution lines**.
 - Publishing: allowed once a milestone is built and tested (release as NppDev 2.0 when M1–M6 are done).
@@ -53,7 +53,7 @@ OS                         Windows: WebView2 · Ubuntu: WebKitGTK
       time & memory limits; compile cache; C++ PCH.
 - [ ] **M3 — editing**: LSP IntelliSense (clangd, jdtls, pylsp, TypeScript); built-in + user snippets;
       Command Palette; Quick Open; VS Code keys.
-- [ ] **M4 — problem import**: Competitive Companion listener; import by URL for Codeforces, AtCoder,
+- [ ] **M4 — problem import**: Competitive Companion listener; import by URL for Codeforces, AtCoder, HackerRank, HackerEarth, NeetCode,
       CodeChef, GeeksforGeeks, LeetCode; creates the file + test cases.
 - [ ] **M5 — tools & extras**: tools detection + one-click installer; integrated terminal; Git panel;
       stress testing; settings export/import.
