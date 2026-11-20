@@ -133,7 +133,7 @@ export const useRun = create<RunState>((set, get) => {
         await app.saveAs(path);
         return app.notify("Saved. Press Ctrl+Enter again to run.");
       }
-      if (!canRun(path)) return app.notify("NppDev can run C, C++, Java, Python, JavaScript, Go, Rust, Kotlin and C# files.", "error");
+      if (!canRun(path)) return app.notify("NppDev can run C, C++, Java, Python, JavaScript, Go, Rust, Kotlin, C# and SQL files.", "error");
       if (get().running) return;
       if (ws.isDirty(path)) await app.save(path);
       await get().load(path);

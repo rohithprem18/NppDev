@@ -9,7 +9,7 @@
   <h3 align="center">NppDev</h3>
 
   <p align="center">
-    A fast, lightweight code editor for practice: write, run and judge C, C++, Java, Python, JavaScript, Go, Rust, Kotlin and C# with one key.
+    A fast, lightweight code editor for practice: write, run and judge C, C++, Java, Python, JavaScript, Go, Rust, Kotlin, C# and SQL with one key.
     <br />
     <a href="#installation"><strong>Install »</strong></a>
     <br />
@@ -73,6 +73,7 @@ NppDev is a desktop editor made for solving problems: open a file, type the inpu
 
 * **Run with one key.** <kbd>Ctrl</kbd>+<kbd>Enter</kbd> compiles (only when the code changed) and runs the file. The panel on the right has three boxes, like an online compiler: **Input**, **Output** and an optional **Expected output**.
 * **Judge verdicts.** Accepted, Wrong Answer (the differing lines are marked), Runtime Error (with the reason, e.g. a bad pointer or stack overflow), Time Limit Exceeded, Memory Limit Exceeded or the compiler's message, with the time and memory the program used. Time and memory limits are yours to set.
+* **SQL with a built-in database.** A new `.sql` file runs on NppDev's sample database (employees, departments, customers, orders, products, students and more) with nothing to install. Every run starts from a fresh copy, so `DELETE` and `DROP` are safe to try. Results print as tables, and the tables and their columns are listed next to your query.
 * **IntelliSense.** Completions, errors as you type, go to definition and rename, from clangd (C/C++), pylsp (Python) and jdtls (Java); JavaScript and TypeScript are built in.
 * **Command Palette and Quick Open.** <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> for any command, <kbd>Ctrl</kbd>+<kbd>P</kbd> for any file in the folder.
 * **Snippets** for competitive programming (`cp`, `fori`, `dsu`, `segtree`, `dijkstra`, ...), plus your own.
@@ -80,7 +81,7 @@ NppDev is a desktop editor made for solving problems: open a file, type the inpu
 * **Settings** (<kbd>Ctrl</kbd>+<kbd>,</kbd>): dark or light theme, editor font and size, auto save, update check, and a **Languages** list that shows which compilers and language servers work, with one-click installs.
 * **Updates ask first.** When a new release is out, NppDev shows a box: Update now, Skip this version, or Later.
 * **Fits into Windows.** Start menu entry, "Open with NppDev" on files and folders in File Explorer, one window for everything you open.
-* **Small.** One 6.5 MB program; your projects are never changed by NppDev's settings or tests.
+* **Small.** One 7.5 MB program; your projects are never changed by NppDev's settings or tests.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -126,6 +127,8 @@ NppDev uses the compilers on your computer. **Settings > Languages** shows which
 
 Each file keeps its own Input and Expected output, so switching between problems is instant.
 
+**SQL:** create a file ending in `.sql` and press <kbd>Ctrl</kbd>+<kbd>Enter</kbd>. Instead of the Input box, the panel lists the sample database's tables and columns; click a table name to insert `SELECT * FROM` it. Table and column names also show up as you type (`employees.` lists its columns).
+
 
 <p align="center">
   <img src="docs/screenshot-light.png" alt="NppDev in the light theme" width="100%">
@@ -147,6 +150,7 @@ Each file keeps its own Input and Expected output, so switching between problems
 | Rust | rustc | |
 | Kotlin | kotlinc | |
 | C# | csc (Windows) or mcs (Linux) | |
+| SQL | built in (SQLite), on a sample database | table and column names |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

@@ -50,6 +50,8 @@ const TYPES: Record<string, FileType> = {
   gif: C("plaintext", "image"),
   svg: C("xml", "image"),
   pdf: C("plaintext", "pdf"),
+  sql: C("sql", "database"),
+  db: C("plaintext", "database"),
 };
 
 const PLAIN = C("plaintext", "document");
@@ -61,10 +63,10 @@ export function fileType(name: string): FileType {
 }
 
 /** Can NppDev run this file? */
-export const RUNNABLE = new Set(["c", "cpp", "java", "python", "javascript", "go", "rust", "kotlin", "csharp"]);
+export const RUNNABLE = new Set(["c", "cpp", "java", "python", "javascript", "go", "rust", "kotlin", "csharp", "sql"]);
 
 export const LANGUAGE_NAMES: Record<string, string> = {
   c: "C", cpp: "C++", java: "Java", python: "Python", javascript: "JavaScript", typescript: "TypeScript",
   go: "Go", rust: "Rust", kotlin: "Kotlin", csharp: "C#", markdown: "Markdown", json: "JSON", plaintext: "Plain Text",
-  ini: "INI", shell: "Shell", powershell: "PowerShell", xml: "XML", yaml: "YAML", html: "HTML", css: "CSS", bat: "Batch",
+  ini: "INI", sql: "SQL", shell: "Shell", powershell: "PowerShell", xml: "XML", yaml: "YAML", html: "HTML", css: "CSS", bat: "Batch",
 };

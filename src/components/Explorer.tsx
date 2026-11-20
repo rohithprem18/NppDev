@@ -6,6 +6,14 @@ import { useApp } from "../store";
 import { Icon } from "./Icons";
 import { FileIcon, FolderIcon } from "./FileIcon";
 
+const SQL_STARTER = `-- Runs on NppDev's sample database (a fresh copy every run): its tables are listed on the right.
+-- Press Ctrl+Enter to run.
+SELECT name, job_title, salary
+FROM employees
+ORDER BY salary DESC
+LIMIT 5;
+`;
+
 type Pending = { kind: "file" | "folder"; dir: string } | { kind: "rename"; path: string } | null;
 interface Menu { x: number; y: number; entry: Entry | null }
 
@@ -89,7 +97,11 @@ export function Explorer() {
         await load(dirName(p.path));
       } else {
         const path = joinPath(p.dir, name);
-        if (p.kind === "file") await api.createFile(path);
+        if (p.kind === "file") {
+          await api.createFile(path);
+          // a new .sql file starts with a query that runs straight away on the sample database
+          if (/\.sql$/i.test(path)) await api.writeText(path, SQL_STARTER);
+        }
         else await api.createDir(path);
         await load(p.dir);
         if (p.kind === "file") openFile(path);

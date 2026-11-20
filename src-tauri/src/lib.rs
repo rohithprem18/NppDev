@@ -2,6 +2,7 @@ mod fs;
 mod lsp;
 mod runner;
 mod settings;
+mod sql;
 mod setup;
 mod tests;
 mod tools;
@@ -111,6 +112,7 @@ pub fn run() {
             settings::save_settings,
             settings::user_snippets_path,
             runner::run_tests,
+            sql::sql_schema,
             runner::stop_run,
             runner::warm_up,
             tests::load_tests,

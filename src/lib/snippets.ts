@@ -3,6 +3,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { monaco } from "./editor";
 import { api } from "./api";
+import { sqlSchema } from "./sqlSchema";
 
 interface Snip { prefix: string; body: string; description: string; scope: string[] }
 
@@ -37,6 +38,15 @@ const BUILT_IN: Snip[] = [
   B("java", "fastreader", "Fast input reader", "static class FastReader {\n\tBufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n\tStringTokenizer st;\n\tString next() throws IOException {\n\t\twhile (st == null || !st.hasMoreTokens()) st = new StringTokenizer(br.readLine());\n\t\treturn st.nextToken();\n\t}\n\tint nextInt() throws IOException { return Integer.parseInt(next()); }\n\tlong nextLong() throws IOException { return Long.parseLong(next()); }\n}"),
   B("java", "sout", "System.out.println", "System.out.println($0);"),
   B("java", "fori", "for i in [0, n)", "for (int ${1:i} = 0; $1 < ${2:n}; $1++) {\n\t$0\n}"),
+  // SQL (the sample database)
+  B("sql", "sel", "SELECT ... FROM ... WHERE", "SELECT ${1:*}\nFROM ${2:employees}\nWHERE ${3:salary > 100000};"),
+  B("sql", "join", "Join two tables", "SELECT ${1:e.name, d.name AS department}\nFROM ${2:employees} e\nJOIN ${3:departments} d ON d.${4:dept_id} = e.${4:dept_id};"),
+  B("sql", "leftjoin", "Left join (keeps rows without a match)", "SELECT ${1:s.name, e.course_id}\nFROM ${2:students} s\nLEFT JOIN ${3:enrollments} e ON e.${4:student_id} = s.${4:student_id};"),
+  B("sql", "group", "GROUP BY with a count", "SELECT ${1:dept_id}, COUNT(*) AS ${2:total}\nFROM ${3:employees}\nGROUP BY $1\nHAVING COUNT(*) > ${4:1};"),
+  B("sql", "top", "Top N rows", "SELECT ${1:*}\nFROM ${2:employees}\nORDER BY ${3:salary} DESC\nLIMIT ${4:5};"),
+  B("sql", "cte", "WITH (common table expression)", "WITH ${1:t} AS (\n\t${2:SELECT * FROM employees}\n)\nSELECT * FROM $1;"),
+  B("sql", "rank", "Rank rows within groups", "SELECT ${1:name}, ${2:dept_id}, ${3:salary},\n       RANK() OVER (PARTITION BY $2 ORDER BY $3 DESC) AS rnk\nFROM ${4:employees};"),
+  B("sql", "create", "CREATE TABLE", "CREATE TABLE ${1:name} (\n\t${2:id} INTEGER PRIMARY KEY,\n\t$0\n);"),
   // JavaScript (NppDev's input helpers)
   B("javascript", "ints", "Read a line of numbers", "const ${1:a} = nextInts();"),
   B("javascript", "tc", "Read t test cases", "let t = nextInt();\nwhile (t--) {\n\t$0\n}"),
@@ -61,7 +71,7 @@ const EXAMPLE = `{
 
 let user: Snip[] = [];
 let userPath: string | null = null;
-const LANGS = ["c", "cpp", "java", "python", "javascript", "typescript", "go", "rust", "kotlin", "csharp"];
+const LANGS = ["c", "cpp", "java", "python", "javascript", "typescript", "go", "rust", "kotlin", "csharp", "sql"];
 
 /** JSON with // comments and trailing commas, like VS Code's settings files. */
 function parseJsonc(text: string): unknown {
@@ -100,9 +110,37 @@ export async function openUserSnippets() {
 
 let registered = false;
 /** Offer snippets in the suggestions of every language. */
+/** SQL: the sample database's tables, and their columns after "table." (or anywhere). */
+function registerSqlNames() {
+  monaco.languages.registerCompletionItemProvider("sql", {
+    triggerCharacters: ["."],
+    async provideCompletionItems(model, position) {
+      const tables = await sqlSchema();
+      const word = model.getWordUntilPosition(position);
+      const range = new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn);
+      const before = model.getLineContent(position.lineNumber).slice(0, word.startColumn - 1);
+      const qualifier = /(\w+)\.$/.exec(before)?.[1]?.toLowerCase();
+      const K = monaco.languages.CompletionItemKind;
+      if (qualifier) {
+        // "employees." lists its columns; an alias ("e.") lists every column
+        const t = tables.find((x) => x.name.toLowerCase() === qualifier);
+        const cols = t ? t.columns.map((c) => ({ c, from: t.name })) : tables.flatMap((x) => x.columns.map((c) => ({ c, from: x.name })));
+        return { suggestions: cols.map(({ c, from }) => ({ label: { label: c, description: from }, kind: K.Field, insertText: c, range })) };
+      }
+      return {
+        suggestions: [
+          ...tables.map((t) => ({ label: { label: t.name, description: `table, ${t.rows} rows` }, kind: K.Struct, insertText: t.name, range, detail: t.columns.join(", "), sortText: "0" + t.name })),
+          ...tables.flatMap((t) => t.columns.map((c) => ({ label: { label: c, description: t.name }, kind: K.Field, insertText: c, range, sortText: "1" + c }))),
+        ],
+      };
+    },
+  });
+}
+
 export function registerSnippets() {
   if (registered) return;
   registered = true;
+  registerSqlNames();
   for (const lang of LANGS) {
     monaco.languages.registerCompletionItemProvider(lang, {
       provideCompletionItems(model, position) {

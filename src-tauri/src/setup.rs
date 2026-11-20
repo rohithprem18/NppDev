@@ -35,6 +35,7 @@ const ROWS: &[(&str, &str, &str, &str, &str)] = &[
     ("rustc", "Rust", "Run Rust", "Rustlang.Rust.GNU", "rustc"),
     ("kotlinc", "Kotlin", "Run Kotlin", "", "kotlin"),
     ("csc", "C#", "Run C#", "", "mono-mcs"),
+    ("sqlite", "SQL (SQLite)", "Run SQL", "", ""),
     ("clangd", "clangd", "C / C++ IntelliSense", "LLVM.LLVM", "clangd"),
     ("pylsp", "pylsp", "Python IntelliSense", "", "python3-pylsp"),
     ("jdtls", "jdtls", "Java IntelliSense", "", ""),
@@ -61,6 +62,7 @@ pub async fn language_status(app: AppHandle, refresh: bool) -> Vec<Status> {
                     (None, java) => (false, if java.is_some() { None } else { Some("needs Java 21 or newer".into()) }),
                 },
                 "csc" => (tools::find("csc").is_some(), tools::find("csc").map(|_| "installed".into())),
+                "sqlite" => (true, Some(format!("built in, SQLite {}, with a sample database", rusqlite::version()))),
                 _ => match tools::find(key) {
                     Some(p) => {
                         let flag = match key { "javac" | "kotlinc" => "-version", "go" => "version", _ => "--version" };

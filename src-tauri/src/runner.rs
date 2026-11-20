@@ -542,14 +542,45 @@ struct Progress {
 }
 
 /// Compile (when needed) and run the tests one by one; each result is also sent as a "run-progress" event.
+/// A .sql file: run on the built-in SQLite with a fresh sample database; same verdicts as programs.
+fn run_sql(path: &Path, req: &RunRequest) -> RunResult {
+    let mut res = RunResult::default();
+    res.compile.ok = true;
+    res.compile.cached = true;
+    let src = match std::fs::read_to_string(path) {
+        Ok(s) => s,
+        Err(e) => { res.error = Some(format!("Can't read the file: {e}")); return res; }
+    };
+    let expected = req.tests.first().and_then(|t| t.expected.clone());
+    let start = Instant::now();
+    let o = crate::sql::run(&src, Duration::from_millis(req.time_limit_ms.max(100)), &CANCEL);
+    let mut r = TestResult { index: 0, output: o.output, time_ms: start.elapsed().as_millis() as u64, ..Default::default() };
+    r.verdict = if o.timed_out {
+        "TLE".into()
+    } else if let Some(err) = o.error {
+        r.message = Some(err);
+        "RE".into()
+    } else {
+        match &expected {
+            Some(e) if !e.trim().is_empty() => if same_answer(&r.output, e) { "AC".into() } else { "WA".into() },
+            _ => "OK".into(),
+        }
+    };
+    res.tests.push(r);
+    res
+}
+
 #[tauri::command]
 pub async fn run_tests(app: AppHandle, req: RunRequest) -> RunResult {
     CANCEL.store(false, Ordering::Relaxed);
     tauri::async_runtime::spawn_blocking(move || {
         let path = PathBuf::from(&req.path);
         let mut res = RunResult::default();
+        if path.extension().is_some_and(|e| e.eq_ignore_ascii_case("sql")) {
+            return run_sql(&path, &req);
+        }
         if lang_of(&path).is_none() {
-            res.error = Some("NppDev can run C, C++, Java, Python, JavaScript, Go, Rust, Kotlin and C# files.".into());
+            res.error = Some("NppDev can run C, C++, Java, Python, JavaScript, Go, Rust, Kotlin, C# and SQL files.".into());
             return res;
         }
         let _ = app.emit("run-progress", Progress { phase: "compile", index: None, result: None });

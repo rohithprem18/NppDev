@@ -1,7 +1,8 @@
 // The Run panel, like an online compiler: Input (stdin), Output, and an optional Expected
 // output. The text boxes keep their own text while you type (the app only listens), so the
 // cursor never jumps.
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
+import { sqlSchema, type SqlTable } from "../lib/sqlSchema";
 import { useRun, canRun, TOOL_NAMES, type Verdict } from "../run";
 import { useApp } from "../store";
 import { Icon } from "./Icons";
@@ -34,6 +35,30 @@ const TextPane = memo(function TextPane({ value, version, onText, placeholder }:
     />
   );
 });
+
+/** The built-in sample database: tables, columns, row counts. Clicking a table puts a query for it
+ * at the cursor. */
+function SampleDatabase() {
+  const [tables, setTables] = useState<SqlTable[]>([]);
+  useEffect(() => { sqlSchema().then(setTables); }, []);
+  const insert = (t: SqlTable) => {
+    const ed = (window as unknown as { nppdevEditor?: { focus(): void; trigger(s: string, h: string, p: unknown): void } }).nppdevEditor;
+    if (!ed) return;
+    ed.focus();
+    ed.trigger("sample-db", "type", { text: `SELECT * FROM ${t.name};` });
+  };
+  return (
+    <div className="pane-body sample-db">
+      {tables.map((t) => (
+        <div key={t.name} className="db-table">
+          <button className="db-name" title={`Insert SELECT * FROM ${t.name};`} onClick={() => insert(t)}>{t.name}</button>
+          <span className="db-rows">{t.rows} rows</span>
+          <div className="db-cols">{t.columns.join(", ")}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function OutputPane() {
   const r = useRun((s) => s.result);
@@ -88,7 +113,7 @@ export function RunPanel() {
     return (
       <aside className="run-panel" style={{ width }}>
         <div className="panel-head"><span className="panel-title">Input and output</span><div className="grow" /><button className="icon-btn" title="Close" onClick={() => st.toggle(false)}>{Icon.close(14)}</button></div>
-        <div className="run-empty">Open a C, C++, Java, Python, JavaScript, Go, Rust, Kotlin or C# file to run it.</div>
+        <div className="run-empty">Open a C, C++, Java, Python, JavaScript, Go, Rust, Kotlin, C# or SQL file to run it.</div>
       </aside>
     );
   }
@@ -103,10 +128,17 @@ export function RunPanel() {
         <button className="icon-btn" title="Close (Ctrl+Shift+B)" onClick={() => st.toggle(false)}>{Icon.close(14)}</button>
       </div>
 
-      <section className="pane input">
-        <div className="pane-head"><span>Input</span><span className="pane-meta">stdin</span></div>
-        <TextPane value={st.input} version={version} onText={st.setInput} placeholder="What your program reads" />
-      </section>
+      {/\.sql$/i.test(active) ? (
+        <section className="pane input">
+          <div className="pane-head"><span>Sample database</span><span className="pane-meta">fresh copy every run</span></div>
+          <SampleDatabase />
+        </section>
+      ) : (
+        <section className="pane input">
+          <div className="pane-head"><span>Input</span><span className="pane-meta">stdin</span></div>
+          <TextPane value={st.input} version={version} onText={st.setInput} placeholder="What your program reads" />
+        </section>
+      )}
 
       <section className="pane output">
         <OutputHead />

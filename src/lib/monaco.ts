@@ -10,6 +10,7 @@ import "@monaco/languages/definitions/kotlin/register.js";
 import "@monaco/languages/definitions/markdown/register.js";
 import "@monaco/languages/definitions/powershell/register.js";
 import "@monaco/languages/definitions/python/register.js";
+import "@monaco/languages/definitions/sql/register.js";
 import "@monaco/languages/definitions/rust/register.js";
 import "@monaco/languages/definitions/shell/register.js";
 import "@monaco/languages/definitions/typescript/register.js";
