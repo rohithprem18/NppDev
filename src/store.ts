@@ -1,5 +1,7 @@
 // App state (zustand): folder, tabs, theme, recent folders, dialogs. Persisted to settings.json.
 import { create } from "zustand";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
 import { api, baseName } from "./lib/api";
 import * as ws from "./lib/workspace";
@@ -49,6 +51,8 @@ interface State extends Persisted {
   cursor: { line: number; col: number };
 
   init(): Promise<void>;
+  /** Files and folders from "Open with NppDev": folders open as the workspace, files as tabs. */
+  openPaths(paths: string[]): Promise<void>;
   setTheme(t: Theme): void;
   openFolder(path?: string): Promise<void>;
   closeFolder(): Promise<void>;
@@ -115,7 +119,20 @@ export const useApp = create<State>((set, get) => {
       registerSnippets();
       loadUserSnippets();
       document.documentElement.dataset.theme = get().theme;
-      if (saved.lastFolder && (await api.pathExists(saved.lastFolder))) await get().openFolder(saved.lastFolder);
+      const asked = await invoke<string[]>("startup_paths").catch(() => [] as string[]);
+      const isDir = async (p: string) => api.listDir(p).then(() => true, () => false);
+      const askedFolder = (await Promise.all(asked.map(isDir))).some(Boolean);
+      if (!askedFolder && saved.lastFolder && (await api.pathExists(saved.lastFolder))) await get().openFolder(saved.lastFolder);
+      if (asked.length) await get().openPaths(asked);
+      listen<string[]>("open-paths", ({ payload }) => { get().openPaths(payload); });
+    },
+
+    async openPaths(paths) {
+      for (const p of paths) {
+        const dir = await api.listDir(p).then(() => true, () => false);
+        if (dir) await get().openFolder(p);
+        else await get().openFile(p);
+      }
     },
 
     setTheme(theme) {

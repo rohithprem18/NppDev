@@ -1,4 +1,4 @@
-# NppDev 2 — migration to Tauri 2 (Windows + Ubuntu)
+# NppDev — migration to Tauri 2 (Windows + Ubuntu)
 
 Status file for the rebuild. Every work session (interactive or the scheduled "resume" task) starts by
 reading this file, continues the first unchecked item, tests it, commits, and ticks it here.
@@ -14,8 +14,9 @@ reading this file, continues the first unchecked item, tests it, commits, and ti
 - Problem import: **Codeforces, AtCoder, CodeChef, GeeksforGeeks, LeetCode, HackerRank, HackerEarth, NeetCode** (+ Competitive Companion).
 - Roadmap items to build (all except code signing / winget).
 - Commits: author rohithprem18, **no co-author or Claude attribution lines**.
-- Publishing: allowed once a milestone is built and tested (release as NppDev 2.0 when M1–M6 are done).
-- The old Notepad++-based NppDev (plugin/, devtools/, installer/, settings/, fonts/) stays until NppDev 2
+- Name: the app is called **NppDev** everywhere (window, installer, shortcuts, README, release titles). Never "NppDev 2"; 2.0.0 is only the version number.
+- Publishing: allowed once a milestone is built and tested (release as NppDev v2.0.0 when M1–M6 are done).
+- The old Notepad++-based NppDev (plugin/, devtools/, installer/, settings/, fonts/) stays until NppDev (Tauri)
   matches it, then it is removed (milestone M6).
 
 ## Architecture
@@ -31,7 +32,7 @@ OS                         Windows: WebView2 · Ubuntu: WebKitGTK
 
 ## Feature map (old → new)
 
-| Old NppDev (Notepad++ plugin) | NppDev 2 |
+| Old NppDev (Notepad++ plugin) | NppDev (Tauri) |
 |---|---|
 | Editor, tabs, themes, Hack font | Monaco + React tabs; Dark / Light themes; bundled Hack font |
 | Explorer (Folder as Workspace + header) | React tree; Rust `fs` commands + watcher |
@@ -58,7 +59,7 @@ OS                         Windows: WebView2 · Ubuntu: WebKitGTK
 - [ ] **M5 — tools & extras**: tools detection + one-click installer; integrated terminal; Git panel;
       stress testing; settings export/import.
 - [ ] **M6 — ship**: Windows NSIS setup + Ubuntu .deb/.AppImage; update check; install.ps1 / install.sh;
-      remove the old Notepad++ files; README; release NppDev 2.0.
+      remove the old Notepad++ files; README; release NppDev v2.0.0.
 
 ## Progress log
 
