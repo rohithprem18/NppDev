@@ -26,7 +26,8 @@ fn env(name: &str) -> Option<PathBuf> {
     std::env::var_os(name).filter(|v| !v.is_empty()).map(PathBuf::from)
 }
 
-/// `name` (without .exe) in each PATH folder, links followed; Windows Store stubs skipped.
+/// `name` (without .exe) in each PATH folder; Windows Store stubs skipped.
+/// Links are NOT followed: ~/.cargo/bin/rustc is a link to rustup, which only works under its own name.
 fn on_path(name: &str) -> Vec<PathBuf> {
     let file = format!("{name}{EXE}");
     let Some(path) = std::env::var_os("PATH") else { return vec![] };
@@ -34,17 +35,11 @@ fn on_path(name: &str) -> Vec<PathBuf> {
         .filter(|d| !d.to_string_lossy().to_lowercase().contains("windowsapps"))
         .map(|d| d.join(&file))
         .filter(|p| p.is_file())
-        .map(|p| std::fs::canonicalize(&p).map(|c| strip_unc(c)).unwrap_or(p))
         .collect()
 }
 
-/// canonicalize() gives \\?\C:\... on Windows; programs and users expect C:\...
-fn strip_unc(p: PathBuf) -> PathBuf {
-    let s = p.to_string_lossy();
-    match s.strip_prefix(r"\\?\") { Some(rest) => PathBuf::from(rest), None => p }
-}
-
 /// Subfolders of `dir` matching a prefix, newest name last (e.g. jdk-17, jdk-21).
+#[cfg_attr(not(windows), allow(dead_code))]
 fn subdirs(dir: &Path, prefix: &str) -> Vec<PathBuf> {
     let mut v: Vec<PathBuf> = std::fs::read_dir(dir)
         .map(|r| r.filter_map(Result::ok).map(|e| e.path()).filter(|p| p.is_dir() && p.file_name().is_some_and(|n| n.to_string_lossy().to_lowercase().starts_with(&prefix.to_lowercase()))).collect())

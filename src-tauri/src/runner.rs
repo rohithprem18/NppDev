@@ -406,10 +406,13 @@ fn run_one(prep: &Prepared, cwd: &Path, index: usize, test: &TestCase, tl_ms: u6
     #[cfg(unix)]
     {
         use std::os::unix::process::CommandExt;
-        let limit = (ml_mb.max(16) * 2 + 256) << 20; // address space: generous, so a JVM still starts
+        // address-space cap as a safety net. Not for the Java VM: it reserves (not uses) far more
+        // address space than the limit and wouldn't start; Java is judged on memory really used.
+        let jvm = Path::new(&prep.run[0]).file_stem().is_some_and(|s| s.to_string_lossy().starts_with("java"));
+        let limit = if jvm { libc::RLIM_INFINITY } else { ((ml_mb.max(16) * 2 + 256) << 20) as libc::rlim_t };
         unsafe {
             c.pre_exec(move || {
-                let rl = libc::rlimit { rlim_cur: limit as libc::rlim_t, rlim_max: limit as libc::rlim_t };
+                let rl = libc::rlimit { rlim_cur: limit, rlim_max: limit };
                 libc::setrlimit(libc::RLIMIT_AS, &rl);
                 let st = libc::rlimit { rlim_cur: libc::RLIM_INFINITY, rlim_max: libc::RLIM_INFINITY };
                 libc::setrlimit(libc::RLIMIT_STACK, &st);
