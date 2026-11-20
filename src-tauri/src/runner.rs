@@ -492,6 +492,8 @@ fn run_one(prep: &Prepared, cwd: &Path, index: usize, test: &TestCase, tl_ms: u6
     let mut over_memory = ml_mb > 0 && peak_kb > ml_mb * 1024;
     #[cfg(windows)]
     if job.as_ref().is_some_and(|j| j.memory_hit()) { over_memory = true; }
+    // out of memory shows up as a crash on Linux (no job object): the runtime says so in stderr
+    if status != Some(0) && ["bad_alloc", "MemoryError", "OutOfMemoryError", "out of memory"].iter().any(|m| r.stderr.contains(m)) { over_memory = true; }
     r.verdict = if CANCEL.load(Ordering::Relaxed) && !timed_out {
         r.message = Some("Stopped.".into());
         "STOPPED".into()
@@ -717,7 +719,9 @@ mod leetcode_tests {
 
     #[test]
     fn leetcode_style() {
-        let user_3sum = std::fs::read_to_string(r"C:\Users\admin\Documents\AMAZON\Coding\15_3Sum.py").unwrap_or_default();
+        let user_3sum = std::fs::read_to_string(r"C:\Users\admin\Documents\AMAZON\Coding\15_3Sum.py").unwrap_or_else(|_| {
+            "class Solution:\n    def threeSum(self, nums: list[int]) -> list[list[int]]:\n        nums.sort()\n        res = []\n        for i in range(len(nums)):\n            if i and nums[i] == nums[i - 1]:\n                continue\n            l, r = i + 1, len(nums) - 1\n            while l < r:\n                s = nums[i] + nums[l] + nums[r]\n                if s == 0:\n                    res.append([nums[i], nums[l], nums[r]])\n                    l += 1\n                    r -= 1\n                    while l < r and nums[l] == nums[l - 1]:\n                        l += 1\n                elif s < 0:\n                    l += 1\n                else:\n                    r -= 1\n        return res\n".into()
+        });
         let cases: Vec<(&str, String, &str, &str)> = vec![
             ("three_sum.py", user_3sum, "[-1,0,1,2,-1,-4]", "[[-1,-1,2],[-1,0,1]]"),
             ("two_sum.py", r#"class Solution:

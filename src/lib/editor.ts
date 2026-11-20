@@ -117,9 +117,10 @@ export const EDITOR_OPTIONS: monaco.editor.IStandaloneEditorConstructionOptions 
   lineHeight: 22,
   automaticLayout: true,
   minimap: { enabled: false },
-  smoothScrolling: true,
-  cursorBlinking: "smooth",
-  cursorSmoothCaretAnimation: "on",
+  // no caret or scroll animations: the caret is exactly where you type, every frame
+  smoothScrolling: false,
+  cursorBlinking: "blink",
+  cursorSmoothCaretAnimation: "off",
   renderLineHighlight: "all",
   scrollBeyondLastLine: false,
   bracketPairColorization: { enabled: false },

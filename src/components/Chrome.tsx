@@ -1,8 +1,8 @@
 // Activity bar, status bar, confirm dialog and toast: the frame around the editor.
 import { useEffect, useRef } from "react";
 import { useApp } from "../store";
+import { useCursor } from "../lib/cursor";
 import { useRun } from "../run";
-import { useImport } from "../import";
 import { usePalette } from "./Palette";
 import { baseName } from "../lib/api";
 import { fileType, LANGUAGE_NAMES } from "../lib/fileTypes";
@@ -10,12 +10,12 @@ import { Icon } from "./Icons";
 
 export function ActivityBar() {
   const { sidebarVisible, toggleSidebar, theme, setTheme } = useApp();
-  const { open: runOpen, toggle: toggleRun } = useRun();
+  const runOpen = useRun((s) => s.open);
+  const toggleRun = useRun.getState().toggle;
   return (
     <nav className="activity-bar">
       <button className={sidebarVisible ? "active" : ""} title="Explorer (Ctrl+B)" onClick={toggleSidebar}>{Icon.files(22)}</button>
       <button className={runOpen ? "active" : ""} title="Run & test cases (Ctrl+Shift+B)" onClick={() => toggleRun()}>{Icon.beaker(22)}</button>
-      <button title="Import problem (Ctrl+I)" onClick={() => useImport.getState().show(true)}>{Icon.download(22)}</button>
       <div className="grow" />
       <button title="Command Palette (Ctrl+Shift+P)" onClick={() => usePalette.getState().show(">")}>{Icon.command(20)}</button>
       <button title={theme === "dark" ? "Light theme" : "Dark theme"} onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
@@ -26,7 +26,10 @@ export function ActivityBar() {
 }
 
 export function StatusBar() {
-  const { folder, active, cursor, tabs } = useApp();
+  const folder = useApp((s) => s.folder);
+  const active = useApp((s) => s.active);
+  const tabs = useApp((s) => s.tabs);
+  const cursor = useCursor();
   const tab = tabs.find((t) => t.path === active);
   const lang = tab ? LANGUAGE_NAMES[fileType(tab.name).lang] ?? "Plain Text" : null;
   return (

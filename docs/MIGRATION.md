@@ -54,7 +54,7 @@ OS                         Windows: WebView2 · Ubuntu: WebKitGTK
       time & memory limits; compile cache; C++ PCH.
 - [x] **M3 — editing**: LSP IntelliSense (clangd, jdtls, pylsp, TypeScript); built-in + user snippets;
       Command Palette; Quick Open; VS Code keys.
-- [x] **M4 — problem import**: Competitive Companion listener; import by URL for Codeforces, AtCoder, HackerRank, HackerEarth, NeetCode,
+- [x] ~~**M4 — problem import**~~ (removed 2026-11-20 at the owner's request: core editor only): Competitive Companion listener; import by URL for Codeforces, AtCoder, HackerRank, HackerEarth, NeetCode,
       CodeChef, GeeksforGeeks, LeetCode; creates the file + test cases.
 - [ ] **M5 — tools & extras**: tools detection + one-click installer; integrated terminal; Git panel;
       stress testing; settings export/import.
@@ -94,3 +94,8 @@ OS                         Windows: WebView2 · Ubuntu: WebKitGTK
   The app takes files/folders on its command line and keeps one window (tauri-plugin-single-instance).
   Installed on the owner's laptop from a local build (NPPDEV_EXE) and checked. Taskbar pinning can't be
   scripted on Windows 11; the owner pins it by hand. Notepad++ uninstall: UAC prompt was cancelled.
+- 2026-11-20 — Owner asked for the core editor only: problem import (8 sites, Competitive Companion,
+  import.rs, ureq) removed. Run panel is now OneCompiler-style: one Input, Output, Expected output per
+  file (uncontrolled text boxes, no cursor jumps). LeetCode-style files still run via src/lc/.
+  Editor: no caret/scroll animation; cursor position in its own store (no app re-render per key).
+  .github/workflows/linux.yml builds on Ubuntu 22.04, runs the judge tests there, uploads .deb + AppImage.

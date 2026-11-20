@@ -48,7 +48,6 @@ interface State extends Persisted {
   treeVersion: number;                 // bump to make the Explorer reload
   toast: { text: string; kind: "info" | "error" } | null;
   confirm: Confirm | null;
-  cursor: { line: number; col: number };
 
   init(): Promise<void>;
   /** Files and folders from "Open with NppDev": folders open as the workspace, files as tabs. */
@@ -69,7 +68,6 @@ interface State extends Persisted {
   notify(text: string, kind?: "info" | "error"): void;
   ask(c: Omit<Confirm, "resolve">): Promise<string>;
   toggleSidebar(): void;
-  setCursor(line: number, col: number): void;
   setSidebarWidth(w: number): void;
   setDefaultLang(id: string): void;
   setFontSize(size: number): void;
@@ -109,7 +107,6 @@ export const useApp = create<State>((set, get) => {
     treeVersion: 0,
     toast: null,
     confirm: null,
-    cursor: { line: 1, col: 1 },
 
     async init() {
       let saved: Partial<Persisted> = {};
@@ -286,7 +283,6 @@ export const useApp = create<State>((set, get) => {
     },
 
     toggleSidebar: () => set((s) => ({ sidebarVisible: !s.sidebarVisible })),
-    setCursor: (line, col) => set({ cursor: { line, col } }),
     setFontSize(size) {
       set({ fontSize: Math.max(9, Math.min(32, Math.round(size))) });
       persist();

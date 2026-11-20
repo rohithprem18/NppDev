@@ -4,13 +4,20 @@ import { monaco, EDITOR_OPTIONS } from "../lib/editor";
 import * as ws from "../lib/workspace";
 import { fileType } from "../lib/fileTypes";
 import { useApp } from "../store";
+import { useCursor } from "../lib/cursor";
 import { useRun, canRun } from "../run";
 import { Icon } from "./Icons";
 import { Welcome } from "./Welcome";
 
 export function EditorArea() {
-  const { tabs, active, dirty, theme, fontSize, activate, closeTab, setCursor } = useApp();
-  const { running, run, stop } = useRun();
+  const tabs = useApp((s) => s.tabs);
+  const active = useApp((s) => s.active);
+  const dirty = useApp((s) => s.dirty);
+  const theme = useApp((s) => s.theme);
+  const fontSize = useApp((s) => s.fontSize);
+  const { activate, closeTab } = useApp.getState();
+  const running = useRun((s) => s.running);
+  const { run, stop } = useRun.getState();
   const host = useRef<HTMLDivElement>(null);
   const editor = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const shown = useRef<string | null>(null);
@@ -20,7 +27,7 @@ export function EditorArea() {
     if (!host.current) return;
     const ed = monaco.editor.create(host.current, { ...EDITOR_OPTIONS, theme: theme === "dark" ? "nppdev-dark" : "nppdev-light", fontSize, model: null });
     editor.current = ed;
-    ed.onDidChangeCursorPosition((e) => setCursor(e.position.lineNumber, e.position.column));
+    ed.onDidChangeCursorPosition((e) => useCursor.setState({ line: e.position.lineNumber, col: e.position.column }));
     // Ctrl+S inside the editor (Monaco takes the key before the window sees it)
     ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => useApp.getState().save());
     ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyS, () => useApp.getState().saveAs());

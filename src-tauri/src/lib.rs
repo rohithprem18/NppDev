@@ -1,5 +1,4 @@
 mod fs;
-mod import;
 mod leetcode;
 mod lsp;
 mod runner;
@@ -54,15 +53,10 @@ pub fn run() {
         .manage(StartupPaths(Mutex::new(first)))
         .setup(|app| {
             if let Some(w) = app.get_webview_window("main") { let _ = w.set_decorations(false); }
-            // Competitive Companion sends problems here from the browser
-            let port = import::listen(app.handle().clone());
-            app.manage(import::CompanionPort(port));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             startup_paths,
-            import::import_problem,
-            import::companion_port,
             fs::list_dir,
             fs::list_files,
             lsp::lsp_start,

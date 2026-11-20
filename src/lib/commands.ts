@@ -1,7 +1,6 @@
 // Everything the Command Palette (Ctrl+Shift+P) can do.
 import { useApp } from "../store";
 import { useRun } from "../run";
-import { useImport } from "../import";
 import type { monaco } from "./editor";
 import { openUserSnippets } from "./snippets";
 
@@ -24,11 +23,9 @@ const app = () => useApp.getState();
 
 export function allCommands(): Command[] {
   return [
-    { id: "run", label: "Run: Run All Tests", keys: "Ctrl+Enter", run: () => useRun.getState().run() },
+    { id: "run", label: "Run", keys: "Ctrl+Enter", run: () => useRun.getState().run() },
     { id: "run.stop", label: "Run: Stop", run: () => useRun.getState().stop() },
-    { id: "run.panel", label: "Run: Show / Hide Test Cases", keys: "Ctrl+Shift+B", run: () => useRun.getState().toggle() },
-    { id: "run.add", label: "Run: Add Test Case", run: () => { useRun.getState().toggle(true); useRun.getState().addTest(); } },
-    { id: "import", label: "Import Problem from a Link…", keys: "Ctrl+I", run: () => useImport.getState().show(true) },
+    { id: "run.panel", label: "Run: Show / Hide Input and Output", keys: "Ctrl+Shift+B", run: () => useRun.getState().toggle() },
     { id: "file.new", label: "File: New File", keys: "Ctrl+N", run: () => app().newFile() },
     { id: "file.openFolder", label: "File: Open Folder…", keys: "Ctrl+Shift+O", run: () => app().openFolder() },
     { id: "file.closeFolder", label: "File: Close Folder", run: () => app().closeFolder() },
