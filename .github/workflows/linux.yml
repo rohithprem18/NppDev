@@ -40,9 +40,9 @@ jobs:
       - name: One-line installer (install.sh) with the .deb just built
         run: |
           NPPDEV_DEB="$(ls src-tauri/target/release/bundle/deb/*.deb)" bash install.sh
-          dpkg -s nppdev | grep -E '^(Package|Status|Version)'
-          test -x /usr/bin/nppdev && ls /usr/share/applications | grep -i nppdev
-          sudo apt-get remove -y nppdev > /dev/null
+          dpkg -s npp-dev | grep -E '^(Package|Status|Version)'
+          test -x /usr/bin/nppdev && test -f /usr/share/applications/NppDev.desktop
+          sudo apt-get remove -y npp-dev > /dev/null
 
       - uses: actions/upload-artifact@v4
         with:

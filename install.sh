@@ -6,7 +6,7 @@
 # It asks GitHub for the latest release, downloads its .deb, checks it against the SHA-256 that
 # GitHub publishes for that file, and installs it with apt (which asks for your password and adds
 # the system libraries NppDev needs). Running it again updates NppDev.
-# Remove NppDev with:  sudo apt remove nppdev
+# Remove NppDev with:  sudo apt remove npp-dev   (the package name; the app is NppDev)
 #
 # Optional:  NPPDEV_DEB=/path/to/NppDev_x.y.z_amd64.deb  installs that file instead of downloading.
 set -euo pipefail

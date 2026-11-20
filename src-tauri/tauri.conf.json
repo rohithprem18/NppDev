@@ -35,8 +35,8 @@
     "publisher": "Rohith Prem",
     "copyright": "Copyright (C) Rohith Prem. GPL-3.0.",
     "category": "DeveloperTool",
-    "shortDescription": "A fast, VS Code-style editor for coding practice",
-    "longDescription": "NppDev: write, run and judge C, C++, Java, Python and JavaScript with one key, with IntelliSense, test cases and problem import.",
+    "shortDescription": "A fast, lightweight code editor for practice",
+    "longDescription": "NppDev: write, run and judge C, C++, Java, Python, JavaScript, Go, Rust, Kotlin and C# with one key, with IntelliSense and input / expected output checking.",
     "homepage": "https://github.com/rohithprem18/NppDev",
     "icon": [
       "icons/32x32.png",

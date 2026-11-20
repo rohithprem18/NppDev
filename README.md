@@ -108,7 +108,7 @@ Paste into a terminal:
 curl -fsSL https://raw.githubusercontent.com/rohithprem18/NppDev/main/install.sh | bash
 ```
 
-It downloads the `.deb` from the latest release, checks it against GitHub's SHA-256 and installs it with apt (it asks for your password once). Run it again to update; remove NppDev with `sudo apt remove nppdev`. There's also an `.AppImage` on the [releases page](https://github.com/rohithprem18/NppDev/releases/latest).
+It downloads the `.deb` from the latest release, checks it against GitHub's SHA-256 and installs it with apt (it asks for your password once). Run it again to update; remove NppDev with `sudo apt remove npp-dev`. There's also an `.AppImage` on the [releases page](https://github.com/rohithprem18/NppDev/releases/latest).
 
 ### Compilers
 

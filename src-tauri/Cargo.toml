@@ -1,7 +1,7 @@
 [package]
 name = "nppdev"
 version = "2.0.0"
-description = "NppDev - a fast, VS Code-style editor for coding practice"
+description = "NppDev - a fast, lightweight code editor for practice"
 authors = ["Rohith Prem"]
 license = "GPL-3.0"
 repository = "https://github.com/rohithprem18/NppDev"
