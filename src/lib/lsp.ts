@@ -55,8 +55,14 @@ class TauriTransport {
 
   toString() { return `lsp:${this.def.key}`; }
 
+  /** Messages go out strictly one after another. Separate invoke calls can be handled out of
+   * order, and then "give me completions" could reach the server before the edit that typed the
+   * dot: the server would complete `math` instead of listing `math.sqrt`, `math.pi`, ... */
+  private outgoing: Promise<unknown> = Promise.resolve();
   private post(m: Json) {
-    return invoke("lsp_send", { id: this.id, msg: JSON.stringify(m) }).catch(() => {});
+    const msg = JSON.stringify(m);
+    this.outgoing = this.outgoing.then(() => invoke("lsp_send", { id: this.id, msg })).catch(() => {});
+    return this.outgoing;
   }
 
   /** Put the editor's URI spelling back into a server message. */

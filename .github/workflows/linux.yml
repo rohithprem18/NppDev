@@ -31,7 +31,7 @@ jobs:
 
       - run: npm ci
 
-      - name: Judge tests (C++, Java, Python, JavaScript, Rust, LeetCode-style)
+      - name: Judge tests (C++, Java, Python, JavaScript, Rust, C#)
         run: cargo test --manifest-path src-tauri/Cargo.toml --lib -- --test-threads=1 --nocapture
 
       - name: Build .deb and AppImage

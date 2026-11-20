@@ -14,7 +14,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter};
 
-use crate::leetcode;
 use crate::tools;
 
 static CANCEL: AtomicBool = AtomicBool::new(false);
@@ -38,9 +37,6 @@ pub struct RunRequest {
     /// Run only these test indexes (all when empty).
     #[serde(default)]
     pub only: Vec<usize>,
-    /// The problem came from LeetCode / NeetCode: run the Solution class like LeetCode does.
-    #[serde(default)]
-    pub leetcode: bool,
 }
 
 #[derive(Serialize, Clone, Default)]
@@ -114,8 +110,6 @@ fn path_with(dir: &Path) -> OsString {
 struct Prepared {
     run: Vec<OsString>,
     env: Vec<(String, OsString)>,
-    /// LeetCode runner: compare answers ignoring spaces ([0, 1] == [0,1]).
-    loose: bool,
 }
 
 enum Lang { C, Cpp, Java, Python, Js, Go, Rust, Kotlin, CSharp }
@@ -178,15 +172,11 @@ pub async fn warm_up() {
 }
 
 /// Compile when needed. Err(Some(key)) = tool missing; Err(None) = compile error (in `out`).
-fn prepare(path: &Path, out: &mut CompileResult, leetcode_hint: bool) -> Result<Prepared, Option<String>> {
+fn prepare(path: &Path, out: &mut CompileResult) -> Result<Prepared, Option<String>> {
     let lang = lang_of(path).ok_or(None)?;
     let dir = run_root().join(hash(&path.to_string_lossy().to_lowercase()));
     std::fs::create_dir_all(&dir).map_err(|_| None)?;
     let src = std::fs::read_to_string(path).unwrap_or_default();
-    let lang_id = match lang { Lang::Cpp => "cpp", Lang::Java => "java", Lang::Python => "python", Lang::Js => "javascript", _ => "" };
-    // LeetCode-style file (only class Solution): run it through NppDev's LeetCode runner
-    let lc = leetcode::detect(lang_id, &src) || (leetcode_hint && lang_id == "javascript");
-    let write_if_changed = |p: &Path, text: &str| { if std::fs::read_to_string(p).ok().as_deref() != Some(text) { let _ = std::fs::write(p, text); } };
     let stem = path.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_else(|| "main".into());
     let need = |key: &'static str| tools::find(key).ok_or(Some(key.to_string()));
     let exe = |name: &str| dir.join(format!("{name}{}", if cfg!(windows) { ".exe" } else { "" }));
@@ -222,33 +212,16 @@ fn prepare(path: &Path, out: &mut CompileResult, leetcode_hint: bool) -> Result<
             let bin = tool.parent().unwrap().to_path_buf();
             let target = exe(&stem);
             let mut flags = if cpp { cpp_flags(needs_cpp20(&src)) } else { vec!["-O2".into(), "-DONLINE_JUDGE".into(), "-fdiagnostics-color=never".into()] };
-            let mut unit = path.to_path_buf();
-            if cpp && lc {
-                let Some(method) = leetcode::method_name(&src) else {
-                    out.output = "NppDev couldn't find the method of class Solution to call.".into();
-                    return Err(None);
-                };
-                write_if_changed(&dir.join("nppdev_lc_pre.h"), leetcode::CPP_PRE);
-                write_if_changed(&dir.join("nppdev_lc_main.h"), leetcode::CPP_MAIN);
-                let fwd = |p: &Path| p.to_string_lossy().replace('\\', "/");
-                let mut main = String::new();
-                if leetcode::defines(&src, "ListNode") { main.push_str("#define NPPDEV_HAS_LISTNODE\n"); }
-                if leetcode::defines(&src, "TreeNode") { main.push_str("#define NPPDEV_HAS_TREENODE\n"); }
-                main.push_str(&format!("#include \"{}\"\n#include \"{}\"\n#include \"{}\"\n", fwd(&dir.join("nppdev_lc_pre.h")), fwd(path), fwd(&dir.join("nppdev_lc_main.h"))));
-                main.push_str(&format!("int main() {{\n    auto lines = nppdev::input_lines();\n    nppdev::run(&Solution::{method}, lines);\n}}\n"));
-                unit = dir.join("nppdev_lc_main.cpp");
-                write_if_changed(&unit, &main);
-            }
-            if cpp && (lc || src.contains("bits/stdc++.h")) {
+            if cpp && src.contains("bits/stdc++.h") {
                 let pch = pch_dir(&tool, &flags);
                 if pch.join("bits").join("stdc++.h.gch").exists() { flags.extend(["-I".into(), pch.to_string_lossy().into_owned()]); }
             }
             let mut args: Vec<OsString> = flags.iter().map(OsString::from).collect();
-            args.push(unit.into_os_string());
+            args.push(path.as_os_str().into());
             args.extend(["-o".into(), target.clone().into_os_string()]);
             if !cpp { args.push("-lm".into()); }
-            build(out, &tool, args, &target, if lc { leetcode::CPP_MAIN } else { "" }, Some(&bin))?;
-            Ok(Prepared { run: vec![target.into_os_string()], env: vec![("PATH".into(), path_with(&bin))], loose: lc })
+            build(out, &tool, args, &target, "", Some(&bin))?;
+            Ok(Prepared { run: vec![target.into_os_string()], env: vec![("PATH".into(), path_with(&bin))] })
         }
         Lang::Java => {
             let javac = need("javac")?;
@@ -257,34 +230,7 @@ fn prepare(path: &Path, out: &mut CompileResult, leetcode_hint: bool) -> Result<
             let marker = classes.join(".built");
             let pkg = src.lines().map(str::trim).find_map(|l| l.strip_prefix("package ").map(|p| p.trim_end_matches(';').trim().to_string()));
             let main = match &pkg { Some(p) => format!("{p}.{stem}"), None => stem.clone() };
-            let mut sources = vec![path.to_path_buf()];
-            let mut lc_args: Vec<OsString> = vec![];
-            if lc {
-                let Some(method) = leetcode::method_name(&src) else {
-                    out.output = "NppDev couldn't find the method of class Solution to call.".into();
-                    return Err(None);
-                };
-                let lc_dir = dir.join("lc-java");
-                let _ = std::fs::create_dir_all(&lc_dir);
-                write_if_changed(&lc_dir.join("NppDevMain.java"), leetcode::JAVA_MAIN);
-                sources.push(lc_dir.join("NppDevMain.java"));
-                if !leetcode::defines(&src, "ListNode") {
-                    write_if_changed(&lc_dir.join("ListNode.java"), "class ListNode {\n    int val;\n    ListNode next;\n    ListNode() {}\n    ListNode(int val) { this.val = val; }\n    ListNode(int val, ListNode next) { this.val = val; this.next = next; }\n}\n");
-                    sources.push(lc_dir.join("ListNode.java"));
-                }
-                if !leetcode::defines(&src, "TreeNode") {
-                    write_if_changed(&lc_dir.join("TreeNode.java"), "class TreeNode {\n    int val;\n    TreeNode left;\n    TreeNode right;\n    TreeNode() {}\n    TreeNode(int val) { this.val = val; }\n    TreeNode(int val, TreeNode left, TreeNode right) { this.val = val; this.left = left; this.right = right; }\n}\n");
-                    sources.push(lc_dir.join("TreeNode.java"));
-                }
-                lc_args = vec!["NppDevMain".into(), method.into()];
-                // LeetCode imports java.util.* for you; add it on the first line so line numbers stay the same
-                if !src.contains("package ") {
-                    let copy = lc_dir.join(path.file_name().unwrap());
-                    write_if_changed(&copy, &format!("import java.util.*; import java.util.stream.*; import java.math.*; {src}"));
-                    sources[0] = copy;
-                }
-            }
-            let key = hash(&(&src, javac.to_string_lossy(), mtime(&javac), lc, leetcode::JAVA_MAIN));
+            let key = hash(&(&src, javac.to_string_lossy(), mtime(&javac)));
             if marker.exists() && std::fs::read_to_string(dir.join(".build-key")).ok().as_deref() == Some(key.as_str()) {
                 out.ok = true;
                 out.cached = true;
@@ -293,32 +239,25 @@ fn prepare(path: &Path, out: &mut CompileResult, leetcode_hint: bool) -> Result<
                 let _ = std::fs::create_dir_all(&classes);
                 let start = Instant::now();
                 out.command = format!("javac -d classes {}", path.file_name().unwrap().to_string_lossy());
-                let o = quiet_command(&javac).args(["-J-XX:TieredStopAtLevel=1", "-J-XX:+UseSerialGC", "-encoding", "UTF-8", "-d"]).arg(&classes).args(&sources)
+                let o = quiet_command(&javac).args(["-J-XX:TieredStopAtLevel=1", "-J-XX:+UseSerialGC", "-encoding", "UTF-8", "-d"]).arg(&classes).arg(path)
                     .current_dir(path.parent().unwrap()).output().map_err(|_| Some("javac".to_string()))?;
                 out.ms = start.elapsed().as_millis() as u64;
-                out.output = format!("{}{}", String::from_utf8_lossy(&o.stdout), String::from_utf8_lossy(&o.stderr)).trim_end()
-                    .replace(&*sources[0].to_string_lossy(), &path.to_string_lossy());
+                out.output = format!("{}{}", String::from_utf8_lossy(&o.stdout), String::from_utf8_lossy(&o.stderr)).trim_end().to_string();
                 out.ok = o.status.success();
                 if !out.ok { return Err(None); }
                 let _ = std::fs::write(&marker, "");
                 let _ = std::fs::write(dir.join(".build-key"), key);
             }
-            let mut run: Vec<OsString> = vec![java.into_os_string(), "-Xss256m".into(), "-Xms32m".into(), "-XX:+UseSerialGC".into(), "-XX:TieredStopAtLevel=1".into(), "-Dstdout.encoding=UTF-8".into(), "-cp".into(), classes.into_os_string()];
-            if lc { run.extend(lc_args); } else { run.push(main.into()); }
-            Ok(Prepared { run, env: vec![], loose: lc })
+            Ok(Prepared {
+                run: vec![java.into_os_string(), "-Xss256m".into(), "-Xms32m".into(), "-XX:+UseSerialGC".into(), "-XX:TieredStopAtLevel=1".into(), "-Dstdout.encoding=UTF-8".into(), "-cp".into(), classes.into_os_string(), main.into()],
+                env: vec![],
+            })
         }
         Lang::Python => {
             let py = need("python")?;
             out.ok = true;
             out.cached = true;
-            let mut run: Vec<OsString> = vec![py.into_os_string(), "-X".into(), "utf8".into()];
-            if lc {
-                let driver = dir.join("nppdev_lc.py");
-                write_if_changed(&driver, leetcode::PY_DRIVER);
-                run.push(driver.into_os_string());
-            }
-            run.push(path.as_os_str().into());
-            Ok(Prepared { run, env: vec![("PYTHONIOENCODING".into(), "utf-8".into())], loose: lc })
+            Ok(Prepared { run: vec![py.into_os_string(), "-X".into(), "utf8".into(), path.as_os_str().into()], env: vec![("PYTHONIOENCODING".into(), "utf-8".into())] })
         }
         Lang::Js => {
             let node = need("node")?;
@@ -326,31 +265,26 @@ fn prepare(path: &Path, out: &mut CompileResult, leetcode_hint: bool) -> Result<
             if std::fs::read_to_string(&prelude).ok().as_deref() != Some(JS_PRELUDE) { let _ = std::fs::write(&prelude, JS_PRELUDE); }
             out.ok = true;
             out.cached = true;
-            if lc {
-                let driver = dir.join("nppdev_lc.js");
-                write_if_changed(&driver, leetcode::JS_DRIVER);
-                return Ok(Prepared { run: vec![node.into_os_string(), "--stack-size=65500".into(), driver.into_os_string(), path.as_os_str().into()], env: vec![], loose: true });
-            }
-            Ok(Prepared { run: vec![node.into_os_string(), "--stack-size=65500".into(), "--require".into(), prelude.into_os_string(), path.as_os_str().into()], env: vec![], loose: false })
+            Ok(Prepared { run: vec![node.into_os_string(), "--stack-size=65500".into(), "--require".into(), prelude.into_os_string(), path.as_os_str().into()], env: vec![] })
         }
         Lang::Go => {
             let go = need("go")?;
             let target = exe(&stem);
             build(out, &go, vec!["build".into(), "-o".into(), target.clone().into_os_string(), path.as_os_str().into()], &target, "", None)?;
-            Ok(Prepared { run: vec![target.into_os_string()], env: vec![], loose: false })
+            Ok(Prepared { run: vec![target.into_os_string()], env: vec![] })
         }
         Lang::Rust => {
             let rustc = need("rustc")?;
             let target = exe(&stem);
             build(out, &rustc, vec!["-O".into(), "--edition".into(), "2021".into(), "-o".into(), target.clone().into_os_string(), path.as_os_str().into()], &target, "", None)?;
-            Ok(Prepared { run: vec![target.into_os_string()], env: vec![], loose: false })
+            Ok(Prepared { run: vec![target.into_os_string()], env: vec![] })
         }
         Lang::Kotlin => {
             let kotlinc = need("kotlinc")?;
             let java = tools::find("java").ok_or(Some("javac".to_string()))?;
             let jar = dir.join(format!("{stem}.jar"));
             build(out, &kotlinc, vec![path.as_os_str().into(), "-include-runtime".into(), "-d".into(), jar.clone().into_os_string()], &jar, "", None)?;
-            Ok(Prepared { run: vec![java.into_os_string(), "-Xss256m".into(), "-Xms32m".into(), "-jar".into(), jar.into_os_string()], env: vec![], loose: false })
+            Ok(Prepared { run: vec![java.into_os_string(), "-Xss256m".into(), "-Xms32m".into(), "-jar".into(), jar.into_os_string()], env: vec![] })
         }
         Lang::CSharp => {
             let csc = need("csc")?;
@@ -360,8 +294,8 @@ fn prepare(path: &Path, out: &mut CompileResult, leetcode_hint: bool) -> Result<
             args.push(out_flag.into());
             args.push(path.as_os_str().into());
             build(out, &csc, args, &target, "", None)?;
-            if cfg!(windows) { Ok(Prepared { run: vec![target.into_os_string()], env: vec![], loose: false }) }
-            else { Ok(Prepared { run: vec!["mono".into(), target.into_os_string()], env: vec![], loose: false }) }
+            if cfg!(windows) { Ok(Prepared { run: vec![target.into_os_string()], env: vec![] }) }
+            else { Ok(Prepared { run: vec!["mono".into(), target.into_os_string()], env: vec![] }) }
         }
     }
 }
@@ -369,12 +303,7 @@ fn prepare(path: &Path, out: &mut CompileResult, leetcode_hint: bool) -> Result<
 // ---------------------------------------------------------------- running one test
 
 /// Judge's comparison: line by line, ignoring trailing spaces and blank lines at the end.
-/// For LeetCode answers, spaces don't matter at all ([0, 1] is [0,1]).
-fn same_answer(got: &str, want: &str, loose: bool) -> bool {
-    if loose {
-        let squash = |t: &str| t.chars().filter(|c| !c.is_whitespace()).collect::<String>();
-        return squash(got) == squash(want);
-    }
+fn same_answer(got: &str, want: &str) -> bool {
     normalize(got) == normalize(want)
 }
 
@@ -519,7 +448,7 @@ fn run_one(prep: &Prepared, cwd: &Path, index: usize, test: &TestCase, tl_ms: u6
             "RE".into()
         } else {
             match &test.expected {
-                Some(e) if !e.trim().is_empty() => if same_answer(&r.output, e, prep.loose) { "AC".into() } else { "WA".into() },
+                Some(e) if !e.trim().is_empty() => if same_answer(&r.output, e) { "AC".into() } else { "WA".into() },
                 _ => "OK".into(),
             }
         }
@@ -624,7 +553,7 @@ pub async fn run_tests(app: AppHandle, req: RunRequest) -> RunResult {
             return res;
         }
         let _ = app.emit("run-progress", Progress { phase: "compile", index: None, result: None });
-        let prep = match prepare(&path, &mut res.compile, req.leetcode) {
+        let prep = match prepare(&path, &mut res.compile) {
             Ok(p) => p,
             Err(Some(key)) if !key.is_empty() => { res.missing = Some(key); return res; }
             Err(_) => { if res.compile.output.is_empty() { res.compile.output = "The compiler could not be started.".into(); } return res; }
@@ -659,7 +588,7 @@ mod judge_tests {
         let path = dir.join(name);
         std::fs::write(&path, code).unwrap();
         let mut c = CompileResult::default();
-        match prepare(&path, &mut c, false) {
+        match prepare(&path, &mut c) {
             Ok(p) => {
                 let t = TestCase { input: input.into(), expected: Some(expected.into()) };
                 let r = run_one(&p, &dir, 0, &t, tl, ml);
@@ -696,158 +625,5 @@ class P{static void Main(){var p=Console.ReadLine().Split(' ');Console.WriteLine
             if got != want && !got.starts_with("MISSING") { bad.push(name); }
         }
         assert!(bad.is_empty(), "wrong verdicts: {bad:?}");
-    }
-}
-
-#[cfg(test)]
-mod leetcode_tests {
-    use super::*;
-
-    fn judge(name: &str, code: &str, input: &str, expected: &str) -> (String, TestResult) {
-        let dir = std::env::temp_dir().join("nppdev-lc-tests");
-        std::fs::create_dir_all(&dir).unwrap();
-        let path = dir.join(name);
-        std::fs::write(&path, code).unwrap();
-        let mut c = CompileResult::default();
-        match prepare(&path, &mut c, false) {
-            Ok(p) => {
-                let t = TestCase { input: input.into(), expected: Some(expected.into()) };
-                let r = run_one(&p, &dir, 0, &t, 10000, 512);
-                (r.verdict.clone(), r)
-            }
-            Err(Some(k)) => (format!("MISSING {k}"), TestResult::default()),
-            Err(None) => ("CE".into(), TestResult { message: Some(c.output), ..Default::default() }),
-        }
-    }
-
-    #[test]
-    fn leetcode_style() {
-        let user_3sum = std::fs::read_to_string(r"C:\Users\admin\Documents\AMAZON\Coding\15_3Sum.py").unwrap_or_else(|_| {
-            "class Solution:\n    def threeSum(self, nums: list[int]) -> list[list[int]]:\n        nums.sort()\n        res = []\n        for i in range(len(nums)):\n            if i and nums[i] == nums[i - 1]:\n                continue\n            l, r = i + 1, len(nums) - 1\n            while l < r:\n                s = nums[i] + nums[l] + nums[r]\n                if s == 0:\n                    res.append([nums[i], nums[l], nums[r]])\n                    l += 1\n                    r -= 1\n                    while l < r and nums[l] == nums[l - 1]:\n                        l += 1\n                elif s < 0:\n                    l += 1\n                else:\n                    r -= 1\n        return res\n".into()
-        });
-        let cases: Vec<(&str, String, &str, &str)> = vec![
-            ("three_sum.py", user_3sum, "[-1,0,1,2,-1,-4]", "[[-1,-1,2],[-1,0,1]]"),
-            ("two_sum.py", r#"class Solution:
-    def twoSum(self, nums: List[int], target: int) -> List[int]:
-        seen = {}
-        for i, x in enumerate(nums):
-            if target - x in seen:
-                return [seen[target - x], i]
-            seen[x] = i
-"#.into(), "[2,7,11,15]\n9", "[0, 1]"),
-            ("reverse.py", r#"# class ListNode:
-#     def __init__(self, val=0, next=None):
-class Solution:
-    def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
-        prev = None
-        while head:
-            head.next, prev, head = prev, head, head.next
-        return prev
-"#.into(), "[1,2,3,4,5]", "[5,4,3,2,1]"),
-            ("rotate.py", r#"class Solution:
-    def rotate(self, nums: List[int], k: int) -> None:
-        k %= len(nums)
-        nums[:] = nums[-k:] + nums[:-k]
-"#.into(), "[1,2,3,4,5,6,7]\n3", "[5,6,7,1,2,3,4]"),
-            ("three_sum.cpp", r#"class Solution {
-public:
-    vector<vector<int>> threeSum(vector<int>& nums) {
-        sort(nums.begin(), nums.end());
-        vector<vector<int>> res;
-        for (int i = 0; i < (int)nums.size(); i++) {
-            if (i && nums[i] == nums[i - 1]) continue;
-            int l = i + 1, r = nums.size() - 1;
-            while (l < r) {
-                int s = nums[i] + nums[l] + nums[r];
-                if (s == 0) { res.push_back({nums[i], nums[l], nums[r]}); l++; r--; while (l < r && nums[l] == nums[l - 1]) l++; }
-                else if (s < 0) l++; else r--;
-            }
-        }
-        return res;
-    }
-};"#.into(), "[-1,0,1,2,-1,-4]", "[[-1,-1,2],[-1,0,1]]"),
-            ("two_sum.cpp", r#"class Solution {
-public:
-    vector<int> twoSum(vector<int>& nums, int target) {
-        unordered_map<int, int> seen;
-        for (int i = 0; i < (int)nums.size(); i++) {
-            if (seen.count(target - nums[i])) return {seen[target - nums[i]], i};
-            seen[nums[i]] = i;
-        }
-        return {};
-    }
-};"#.into(), "[2,7,11,15]\n9", "[0,1]"),
-            ("depth.cpp", r#"/**
- * Definition for a binary tree node.
- * struct TreeNode {
- *     int val;
- * };
- */
-class Solution {
-public:
-    int maxDepth(TreeNode* root) {
-        if (!root) return 0;
-        return 1 + max(maxDepth(root->left), maxDepth(root->right));
-    }
-};"#.into(), "[3,9,20,null,null,15,7]", "3"),
-            ("reverse.cpp", r#"class Solution {
-public:
-    ListNode* reverseList(ListNode* head) {
-        ListNode* prev = nullptr;
-        while (head) { ListNode* n = head->next; head->next = prev; prev = head; head = n; }
-        return prev;
-    }
-};"#.into(), "[1,2,3]", "[3,2,1]"),
-            ("ThreeSum.java", r#"class Solution {
-    public List<List<Integer>> threeSum(int[] nums) {
-        Arrays.sort(nums);
-        List<List<Integer>> res = new ArrayList<>();
-        for (int i = 0; i < nums.length; i++) {
-            if (i > 0 && nums[i] == nums[i - 1]) continue;
-            int l = i + 1, r = nums.length - 1;
-            while (l < r) {
-                int s = nums[i] + nums[l] + nums[r];
-                if (s == 0) { res.add(Arrays.asList(nums[i], nums[l], nums[r])); l++; r--; while (l < r && nums[l] == nums[l - 1]) l++; }
-                else if (s < 0) l++; else r--;
-            }
-        }
-        return res;
-    }
-}"#.replace("class Solution", "import java.util.*;\n\nclass Solution"), "[-1,0,1,2,-1,-4]", "[[-1,-1,2],[-1,0,1]]"),
-            ("Depth.java", r#"class Solution {
-    public int maxDepth(TreeNode root) {
-        if (root == null) return 0;
-        return 1 + Math.max(maxDepth(root.left), maxDepth(root.right));
-    }
-}"#.into(), "[3,9,20,null,null,15,7]", "3"),
-            ("twoSum.js", r#"/**
- * @param {number[]} nums
- * @param {number} target
- * @return {number[]}
- */
-var twoSum = function(nums, target) {
-    const seen = new Map();
-    for (let i = 0; i < nums.length; i++) {
-        if (seen.has(target - nums[i])) return [seen.get(target - nums[i]), i];
-        seen.set(nums[i], i);
-    }
-};"#.into(), "[3,2,4]\n6", "[1,2]"),
-            ("reverse.js", r#"/**
- * @param {ListNode} head
- * @return {ListNode}
- */
-var reverseList = function(head) {
-    let prev = null;
-    while (head) { const n = head.next; head.next = prev; prev = head; head = n; }
-    return prev;
-};"#.into(), "[1,2,3]", "[3,2,1]"),
-        ];
-        let mut bad = vec![];
-        for (name, code, input, exp) in &cases {
-            let (got, r) = judge(name, code, input, exp);
-            println!("{name:14} {got:8} out={:?} err={:?} msg={:?}", r.output.trim(), r.stderr.chars().take(300).collect::<String>(), r.message.as_deref().map(|m| m.chars().take(400).collect::<String>()));
-            if got != "AC" && !got.starts_with("MISSING") { bad.push(*name); }
-        }
-        assert!(bad.is_empty(), "not accepted: {bad:?}");
     }
 }

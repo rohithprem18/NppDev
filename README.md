@@ -126,7 +126,6 @@ NppDev uses the compilers on your computer. **Settings > Languages** shows which
 
 Each file keeps its own Input and Expected output, so switching between problems is instant.
 
-**LeetCode answers run as they are.** Paste your solution exactly as you write it on LeetCode (no `main` needed), put the example's values in the Input box, one per line (for example `[2,7,11,15]` and then `9`), and press <kbd>Ctrl</kbd>+<kbd>Enter</kbd>. NppDev calls your function with them and prints the result the way LeetCode shows it.
 
 <p align="center">
   <img src="docs/screenshot-light.png" alt="NppDev in the light theme" width="100%">
@@ -187,7 +186,7 @@ npx tauri build --bundles deb,appimage     # Ubuntu packages
 cargo test --manifest-path src-tauri/Cargo.toml --lib -- --test-threads=1   # judge tests
 ```
 
-The judge tests compile and run real programs in every installed language and check each verdict, LeetCode answers included. They also run on Ubuntu for every push.
+The judge tests compile and run real programs in every installed language and check each verdict. They also run on Ubuntu for every push.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

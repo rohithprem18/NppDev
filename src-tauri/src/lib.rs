@@ -1,5 +1,4 @@
 mod fs;
-mod leetcode;
 mod lsp;
 mod runner;
 mod settings;

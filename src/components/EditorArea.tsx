@@ -21,8 +21,7 @@ export function EditorArea() {
   const fontSize = useApp((s) => s.fontSize);
   const editorFont = useApp((s) => s.editorFont);
   const { activate, closeTab } = useApp.getState();
-  const running = useRun((s) => s.running);
-  const { run, stop } = useRun.getState();
+  const { run } = useRun.getState();
   const host = useRef<HTMLDivElement>(null);
   const editor = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const mod = useRef<EditorModule | null>(null);
@@ -105,11 +104,8 @@ export function EditorArea() {
           ))}
         </div>
         {canRun(active) && (
-          // one steady button: no colour change while running (most runs take a blink); a spinner
-          // shows only if a run takes a while, and clicking it then stops the program
-          <button className={"tab-run" + (running ? " running" : "")} title={running ? "Running: click to stop" : "Run (Ctrl+Enter)"} onClick={() => (running ? stop() : run())}>
-            {running ? <span className="spinner" /> : Icon.run(12)}<span>Run</span>
-          </button>
+          // a plain Run button: it never changes while a program runs
+          <button className="tab-run" title="Run (Ctrl+Enter)" onClick={() => run()}>{Icon.run(12)}<span>Run</span></button>
         )}
         </div>
       )}

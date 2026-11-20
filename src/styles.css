@@ -99,7 +99,6 @@ kbd { font: 11px/1 var(--sans); color: var(--muted); padding: 3px 5px; border-ra
 .btn.primary:not(.monaco-editor *) { background: var(--primary-bg); color: var(--primary-fg); box-shadow: none; }
 .btn.primary:hover:not(:disabled):not(.monaco-editor *) { background: var(--primary-bg); opacity: .88; }
 .btn.danger { color: var(--danger); }
-.btn.danger.run-btn { background: var(--danger); color: #fff; box-shadow: none; }
 
 /* ---------- layout ---------- */
 .app { height: 100%; display: flex; flex-direction: column; }
@@ -162,9 +161,6 @@ kbd { font: 11px/1 var(--sans); color: var(--muted); padding: 3px 5px; border-ra
 .tab.dirty:hover:not(.monaco-editor *) .tab-close .dot, .tab.dirty.active:not(.monaco-editor *) .tab-close .dot { display: none; }
 .tab-run { display: flex; align-items: center; gap: 6px; height: 26px; margin: 0 8px; padding: 0 10px; border-radius: var(--r-sm); color: var(--primary-fg); background: var(--primary-bg); font-weight: 500; font-size: 12px; flex: none; }
 .tab-run:hover { opacity: .88; }
-/* the spinner fades in only after a quarter-second, so quick runs show nothing at all */
-.tab-run .spinner { width: 12px; height: 12px; opacity: 0; animation: spin .7s linear infinite, appear 0s linear .25s forwards; }
-@keyframes appear { to { opacity: 1; } }
 .editor-host { flex: 1; min-height: 0; }
 
 /* ---------- welcome ---------- */
@@ -207,7 +203,6 @@ kbd { font: 11px/1 var(--sans); color: var(--muted); padding: 3px 5px; border-ra
 .run-panel { display: flex; flex-direction: column; min-width: 300px; background: var(--bg); border-left: 1px solid var(--border); flex: none; }
 .panel-head { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 8px 0 12px; border-bottom: 1px solid var(--border); background: var(--bg-side); flex: none; }
 .panel-title { font-weight: 600; color: var(--text-strong); }
-.run-btn { height: 28px; font-weight: 500; white-space: nowrap; flex: none; }
 .limit:not(.monaco-editor *) { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 12px; }
 .limit input { width: 54px; height: 26px; padding: 0 6px; font: inherit; font-size: 12px; color: var(--text-strong); background: var(--bg); border: 1px solid var(--border-strong); border-radius: var(--r-sm); text-align: right; }
 .limit input:focus { outline: none; border-color: var(--accent); }
