@@ -12,3 +12,9 @@ node_modules/
 dist/
 src-tauri/target/
 src-tauri/gen/
+
+# local test page and editor settings
+suggest-test.html
+.claude/
+vite.test.config.ts
+dist-test/

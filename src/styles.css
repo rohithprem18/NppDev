@@ -86,8 +86,8 @@ body {
 ::selection { background: var(--accent-soft); }
 body.resizing { cursor: col-resize; }
 body.resizing * { pointer-events: none; }
-button:not(.monaco-editor *) { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; letter-spacing: inherit; }
-:focus-visible:not(.monaco-editor *) { outline: 2px solid var(--accent); outline-offset: 1px; }
+:where(button:not(.monaco-editor *)) { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; letter-spacing: inherit; }
+:where(:focus-visible:not(.monaco-editor *)) { outline: 2px solid var(--accent); outline-offset: 1px; }
 kbd { font: 11px/1 var(--sans); color: var(--muted); padding: 3px 5px; border-radius: 4px; background: var(--bg-inset); box-shadow: var(--ring); white-space: nowrap; }
 .grow:not(.monaco-editor *) { flex: 1; }
 .muted:not(.monaco-editor *) { color: var(--muted); }
@@ -162,7 +162,9 @@ kbd { font: 11px/1 var(--sans); color: var(--muted); padding: 3px 5px; border-ra
 .tab.dirty:hover:not(.monaco-editor *) .tab-close .dot, .tab.dirty.active:not(.monaco-editor *) .tab-close .dot { display: none; }
 .tab-run { display: flex; align-items: center; gap: 6px; height: 26px; margin: 0 8px; padding: 0 10px; border-radius: var(--r-sm); color: var(--primary-fg); background: var(--primary-bg); font-weight: 500; font-size: 12px; flex: none; }
 .tab-run:hover { opacity: .88; }
-.tab-run.stop { background: var(--danger); color: #fff; }
+/* the spinner fades in only after a quarter-second, so quick runs show nothing at all */
+.tab-run .spinner { width: 12px; height: 12px; opacity: 0; animation: spin .7s linear infinite, appear 0s linear .25s forwards; }
+@keyframes appear { to { opacity: 1; } }
 .editor-host { flex: 1; min-height: 0; }
 
 /* ---------- welcome ---------- */

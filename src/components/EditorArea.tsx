@@ -105,9 +105,11 @@ export function EditorArea() {
           ))}
         </div>
         {canRun(active) && (
-          running
-            ? <button className="tab-run stop" title="Stop" onClick={stop}>{Icon.stop(12)}<span>Stop</span></button>
-            : <button className="tab-run" title="Run (Ctrl+Enter)" onClick={() => run()}>{Icon.run(12)}<span>Run</span></button>
+          // one steady button: no colour change while running (most runs take a blink); a spinner
+          // shows only if a run takes a while, and clicking it then stops the program
+          <button className={"tab-run" + (running ? " running" : "")} title={running ? "Running: click to stop" : "Run (Ctrl+Enter)"} onClick={() => (running ? stop() : run())}>
+            {running ? <span className="spinner" /> : Icon.run(12)}<span>Run</span>
+          </button>
         )}
         </div>
       )}
