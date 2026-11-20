@@ -156,7 +156,7 @@ Each file keeps its own Input and Expected output, so switching between problems
 
 | Action | Keys |
 | --- | --- |
-| Run | <kbd>Ctrl</kbd>+<kbd>Enter</kbd> |
+| Run | <kbd>Ctrl</kbd>+<kbd>Enter</kbd> or <kbd>F5</kbd> |
 | Show or hide Input / Output | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> |
 | Quick Open a file | <kbd>Ctrl</kbd>+<kbd>P</kbd> |
 | Command Palette | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> or <kbd>F1</kbd> |
@@ -166,7 +166,25 @@ Each file keeps its own Input and Expected output, so switching between problems
 | Close tab / Next tab | <kbd>Ctrl</kbd>+<kbd>W</kbd> / <kbd>Ctrl</kbd>+<kbd>Tab</kbd> |
 | Show or hide the Explorer | <kbd>Ctrl</kbd>+<kbd>B</kbd> |
 | Font size | <kbd>Ctrl</kbd>+<kbd>=</kbd> / <kbd>Ctrl</kbd>+<kbd>-</kbd> / <kbd>Ctrl</kbd>+<kbd>0</kbd> |
-| Go to definition / Rename | <kbd>F12</kbd> / <kbd>F2</kbd> |
+
+**Editing** (the same keys as VS Code):
+
+| Action | Keys |
+| --- | --- |
+| Move line up / down | <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>Alt</kbd>+<kbd>↓</kbd> |
+| Duplicate line | <kbd>Shift</kbd>+<kbd>Alt</kbd>+<kbd>↓</kbd> |
+| Delete line | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> |
+| Toggle comment | <kbd>Ctrl</kbd>+<kbd>/</kbd> |
+| Select next match / all matches | <kbd>Ctrl</kbd>+<kbd>D</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> |
+| Add cursor above / below | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>↓</kbd> (or <kbd>Alt</kbd>+click) |
+| Find / Replace | <kbd>Ctrl</kbd>+<kbd>F</kbd> / <kbd>Ctrl</kbd>+<kbd>H</kbd> |
+| Go to line | <kbd>Ctrl</kbd>+<kbd>G</kbd> |
+| Suggestions / parameter hints | <kbd>Ctrl</kbd>+<kbd>Space</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd> |
+| Go to definition / find references | <kbd>F12</kbd> / <kbd>Shift</kbd>+<kbd>F12</kbd> |
+| Rename / next error | <kbd>F2</kbd> / <kbd>F8</kbd> |
+| Format document | <kbd>Shift</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd> |
+| Fold / unfold | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>]</kbd> |
+| Expand selection / jump to bracket | <kbd>Shift</kbd>+<kbd>Alt</kbd>+<kbd>→</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>\</kbd> |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

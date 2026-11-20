@@ -5,7 +5,7 @@ import { Icon } from "./Icons";
 import logo from "../assets/logo.svg";
 
 const KEYS: [string, string][] = [
-  ["Run the current file", "Ctrl+Enter"],
+  ["Run the current file", "Ctrl+Enter / F5"],
   ["Quick Open a file", "Ctrl+P"],
   ["Command Palette", "Ctrl+Shift+P"],
   ["Open Folder", "Ctrl+Shift+O"],

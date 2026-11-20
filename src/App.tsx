@@ -36,6 +36,7 @@ export default function App() {
     const onKey = (e: KeyboardEvent) => {
       const s = useApp.getState();
       const ctrl = e.ctrlKey || e.metaKey;
+      if (e.key === "F5" && !ctrl && !e.shiftKey && !e.altKey) { e.preventDefault(); e.stopPropagation(); useRun.getState().run(); return; }
       if (e.key === "F1") { e.preventDefault(); e.stopPropagation(); usePalette.getState().show(">"); return; }
       if (!ctrl) return;
       const k = e.key.toLowerCase();
