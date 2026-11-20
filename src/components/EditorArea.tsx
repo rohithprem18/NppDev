@@ -33,7 +33,12 @@ export function EditorArea() {
   useEffect(() => {
     let disposed = false;
     let cleanup = () => {};
-    ws.monacoReady.then((m) => {
+    ws.monacoReady.then(async (m) => {
+      // Monaco measures character widths when the editor is created; with the code font not yet
+      // loaded it would measure a fallback font, and the caret, underlines and highlights would
+      // then drift from the letters. The window is already on screen, so waiting costs nothing.
+      const fonts = Promise.all([document.fonts.load("15px Hack"), document.fonts.load(`15px "${useApp.getState().editorFont}"`)]).catch(() => {});
+      await Promise.race([fonts, new Promise((done) => setTimeout(done, 1500))]);
       if (disposed || !host.current) return;
       const { monaco, EDITOR_OPTIONS } = m;
       mod.current = m;

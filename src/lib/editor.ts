@@ -113,6 +113,7 @@ monaco.editor.defineTheme("nppdev-light", {
 
 export const EDITOR_OPTIONS: monaco.editor.IStandaloneEditorConstructionOptions = {
   fontFamily: "Hack, 'Cascadia Code', Consolas, 'Ubuntu Mono', monospace",
+  fontLigatures: false, // every character exactly one cell wide, as Monaco measured it
   fontSize: 15,
   lineHeight: 22,
   automaticLayout: true,
