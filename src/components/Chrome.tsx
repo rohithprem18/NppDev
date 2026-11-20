@@ -65,5 +65,10 @@ export function ConfirmDialog() {
 export function Toast() {
   const toast = useApp((s) => s.toast);
   if (!toast) return null;
-  return <div className={"toast " + toast.kind} role="status">{toast.text}</div>;
+  return (
+    <div className={"toast " + toast.kind} role="status">
+      <span className="toast-icon">{toast.kind === "error" ? Icon.alert(16) : Icon.info(16)}</span>
+      <span>{toast.text}</span>
+    </div>
+  );
 }

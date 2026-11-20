@@ -67,7 +67,8 @@ export function Settings() {
   const theme = useApp((s) => s.theme);
   const fontSize = useApp((s) => s.fontSize);
   const editorFont = useApp((s) => s.editorFont);
-  const { setTheme, setFontSize, setEditorFont } = useApp.getState();
+  const autoSave = useApp((s) => s.autoSave);
+  const { setTheme, setFontSize, setEditorFont, setAutoSave } = useApp.getState();
   const [version, setVersion] = useState("");
   const [checking, setChecking] = useState(false);
   useEffect(() => { getVersion().then(setVersion).catch(() => {}); }, []);
@@ -100,6 +101,18 @@ export function Settings() {
             </div>
           </div>
           <p className="set-hint">Fonts other than Hack are used if they're installed on this computer.</p>
+        </section>
+
+        <section className="set-section">
+          <h3>Files</h3>
+          <div className="set-row">
+            <span>Auto save</span>
+            <div className="segmented">
+              <button className={autoSave ? "on" : ""} onClick={() => setAutoSave(true)}>On</button>
+              <button className={!autoSave ? "on" : ""} onClick={() => setAutoSave(false)}>Off</button>
+            </div>
+          </div>
+          <p className="set-hint">Saves a second after you stop typing, and when you switch files or windows. New files are saved once you name them (Ctrl+S).</p>
         </section>
 
         <section className="set-section">

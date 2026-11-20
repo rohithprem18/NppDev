@@ -78,11 +78,24 @@ fn known_dirs(key: &str) -> Vec<PathBuf> {
             }
             "node" => { for p in &pf { v.push(p.join("nodejs")); } v.push(PathBuf::from("C:\\nvm4w\\nodejs")); }
             "go" => { for p in &pf { v.push(p.join("Go\\bin")); } }
-            "rustc" | "cargo" => { if let Some(h) = env("USERPROFILE") { v.push(h.join(".cargo\\bin")); } }
-            "kotlinc" => { for p in &pf { v.push(p.join("kotlinc\\bin")); } }
+            "rustc" | "cargo" => {
+                if let Some(h) = env("USERPROFILE") { v.push(h.join(".cargo\\bin")); }
+                // the standalone GNU build (winget Rustlang.Rust.GNU): "Rust stable GNU 1.xx"
+                for p in &pf { for d in subdirs(p, "Rust ").into_iter().rev() { v.push(d.join("bin")); } }
+            }
+            "kotlinc" => {
+                for p in &pf { v.push(p.join("kotlinc\\bin")); }
+                for d in subdirs(&local.join("Microsoft\\WinGet\\Packages"), "JetBrains.Kotlin").into_iter().rev() { v.push(d.join("kotlinc\\bin")); }
+            }
+            // LLVM's installer doesn't put itself on PATH
+            "clangd" => { for p in &pf { v.push(p.join("LLVM\\bin")); } }
             "csc" => { v.push(PathBuf::from("C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319")); }
             _ => {}
         }
+        // command links winget makes for portable packages
+        v.push(local.join("Microsoft\\WinGet\\Links"));
+        // NppDev's own tools folder (Settings > Languages installs Kotlin there)
+        if key == "kotlinc" { v.push(local.join("dev.rohithprem.nppdev\\tools\\kotlinc\\bin")); }
     }
     #[cfg(not(windows))]
     {
@@ -90,7 +103,10 @@ fn known_dirs(key: &str) -> Vec<PathBuf> {
         match key {
             "rustc" | "cargo" => v.push(home.join(".cargo/bin")),
             "go" => v.push(PathBuf::from("/usr/local/go/bin")),
-            "kotlinc" => v.push(home.join(".sdkman/candidates/kotlin/current/bin")),
+            "kotlinc" => {
+                v.push(home.join(".local/share/dev.rohithprem.nppdev/tools/kotlinc/bin"));
+                v.push(home.join(".sdkman/candidates/kotlin/current/bin"));
+            }
             _ => {}
         }
         v.extend(["/usr/bin", "/usr/local/bin", "/snap/bin"].map(PathBuf::from));
@@ -148,7 +164,43 @@ pub fn find(key: &'static str) -> Option<PathBuf> {
 }
 
 /// Forget what was found (after installing a tool).
-pub fn forget() { *CACHE.lock().unwrap() = None; }
+pub fn forget() {
+    *CACHE.lock().unwrap() = None;
+    refresh_path();
+}
+
+/// A running program keeps the PATH it started with, so something installed since (winget, an
+/// MSI) wouldn't be found until NppDev restarts. Read PATH again from the registry (machine, then
+/// user, as Windows builds it) and keep anything else this process had.
+#[cfg(windows)]
+fn refresh_path() {
+    use windows_sys::Win32::System::Registry::{RegGetValueW, HKEY, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, RRF_RT_REG_EXPAND_SZ, RRF_RT_REG_SZ};
+    fn read(root: HKEY, key: &str) -> Option<String> {
+        let wide = |s: &str| s.encode_utf16().chain(Some(0)).collect::<Vec<u16>>();
+        let (k, name) = (wide(key), wide("Path"));
+        let mut size: u32 = 0;
+        unsafe {
+            // RRF_RT_REG_EXPAND_SZ without RRF_NOEXPAND: %VARS% come back expanded
+            if RegGetValueW(root, k.as_ptr(), name.as_ptr(), RRF_RT_REG_SZ | RRF_RT_REG_EXPAND_SZ, std::ptr::null_mut(), std::ptr::null_mut(), &mut size) != 0 { return None; }
+            let mut buf = vec![0u16; size as usize / 2 + 1];
+            if RegGetValueW(root, k.as_ptr(), name.as_ptr(), RRF_RT_REG_SZ | RRF_RT_REG_EXPAND_SZ, std::ptr::null_mut(), buf.as_mut_ptr().cast(), &mut size) != 0 { return None; }
+            Some(String::from_utf16_lossy(&buf[..buf.iter().position(|&c| c == 0).unwrap_or(buf.len())]))
+        }
+    }
+    let machine = read(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment").unwrap_or_default();
+    let user = read(HKEY_CURRENT_USER, "Environment").unwrap_or_default();
+    let mut dirs: Vec<PathBuf> = std::env::split_paths(&format!("{machine};{user}")).filter(|p| !p.as_os_str().is_empty()).collect();
+    if let Some(old) = std::env::var_os("PATH") {
+        for p in std::env::split_paths(&old) { if !dirs.contains(&p) { dirs.push(p); } }
+    }
+    if let Ok(joined) = std::env::join_paths(dirs) {
+        // NppDev only reads PATH on its own threads at these moments; nothing else is changing it
+        unsafe { std::env::set_var("PATH", joined); }
+    }
+}
+
+#[cfg(not(windows))]
+fn refresh_path() {}
 
 /// First line of `<tool> --version` (or -version), without the noise.
 pub fn version(path: &Path, flag: &str) -> Option<String> {

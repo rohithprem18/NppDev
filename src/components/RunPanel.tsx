@@ -80,7 +80,6 @@ export function RunPanel() {
   const active = useApp((s) => s.active);
   const width = useRun((s) => s.width);
   const version = useRun((s) => s.version);
-  const running = useRun((s) => s.running); // the Run / Stop button is on the tab bar
   const tl = useRun((s) => s.timeLimitMs);
   const ml = useRun((s) => s.memoryLimitMb);
   const st = useRun.getState(); // input/expected are read here only when `version` changes
@@ -88,7 +87,7 @@ export function RunPanel() {
   if (!active || !canRun(active)) {
     return (
       <aside className="run-panel" style={{ width }}>
-        <div className="panel-head"><span className="panel-title">Run</span><div className="grow" /><button className="icon-btn" title="Close" onClick={() => st.toggle(false)}>{Icon.close(14)}</button></div>
+        <div className="panel-head"><span className="panel-title">Input and output</span><div className="grow" /><button className="icon-btn" title="Close" onClick={() => st.toggle(false)}>{Icon.close(14)}</button></div>
         <div className="run-empty">Open a C, C++, Java, Python, JavaScript, Go, Rust, Kotlin or C# file to run it.</div>
       </aside>
     );
@@ -97,10 +96,10 @@ export function RunPanel() {
   return (
     <aside className="run-panel" style={{ width }}>
       <div className="panel-head">
-        <span className="panel-title">{running ? "Running…" : "Run"}</span>
+        {/* the Run / Stop button is on the tab bar; here only the judge's limits */}
+        <label className="limit" title="The longest your program may run on this input">Time limit <input type="number" min={100} step={500} value={tl} onChange={(e) => st.setLimits(+e.target.value, ml)} /> ms</label>
+        <label className="limit" title="The most memory your program may use">Memory <input type="number" min={16} step={64} value={ml} onChange={(e) => st.setLimits(tl, +e.target.value)} /> MB</label>
         <div className="grow" />
-        <label className="limit" title="Time limit"><input type="number" min={100} step={500} value={tl} onChange={(e) => st.setLimits(+e.target.value, ml)} /> ms</label>
-        <label className="limit" title="Memory limit"><input type="number" min={16} step={64} value={ml} onChange={(e) => st.setLimits(tl, +e.target.value)} /> MB</label>
         <button className="icon-btn" title="Close (Ctrl+Shift+B)" onClick={() => st.toggle(false)}>{Icon.close(14)}</button>
       </div>
 

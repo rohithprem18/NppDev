@@ -32,8 +32,8 @@ const ROWS: &[(&str, &str, &str, &str, &str)] = &[
     ("python", "Python", "Run Python", "Python.Python.3.13", "python3"),
     ("node", "Node.js", "Run JavaScript", "OpenJS.NodeJS.LTS", "nodejs"),
     ("go", "Go", "Run Go", "GoLang.Go", "golang-go"),
-    ("rustc", "Rust", "Run Rust", "Rustlang.Rustup", "rustc"),
-    ("kotlinc", "Kotlin", "Run Kotlin", "JetBrains.Kotlin.Compiler", "kotlin"),
+    ("rustc", "Rust", "Run Rust", "Rustlang.Rust.GNU", "rustc"),
+    ("kotlinc", "Kotlin", "Run Kotlin", "", "kotlin"),
     ("csc", "C#", "Run C#", "", "mono-mcs"),
     ("clangd", "clangd", "C / C++ IntelliSense", "LLVM.LLVM", "clangd"),
     ("pylsp", "pylsp", "Python IntelliSense", "", "python3-pylsp"),
@@ -69,7 +69,7 @@ pub async fn language_status(app: AppHandle, refresh: bool) -> Vec<Status> {
                     None => (false, None),
                 },
             };
-            let install = if ok { None } else if matches!(key, "jdtls" | "pylsp") && (key != "pylsp" || tools::find("python").is_some()) {
+            let install = if ok { None } else if matches!(key, "jdtls" | "pylsp" | "kotlinc") && (key != "pylsp" || tools::find("python").is_some()) {
                 Some("auto".into())
             } else if cfg!(windows) {
                 (!winget.is_empty()).then(|| "winget".into())
@@ -106,6 +106,42 @@ pub async fn install_language(app: AppHandle, key: String) -> Result<String, Str
             lsp::forget_checks();
             Ok("Java IntelliSense is installed. Open a .java file to use it.".into())
         }
+        "kotlinc" => {
+            // not on winget: the official compiler zip from JetBrains' GitHub releases
+            if tools::find("java").is_none() { return Err("Kotlin runs on Java: install Java (JDK) first.".into()); }
+            let root = app.path().app_local_data_dir().map_err(|e| e.to_string())?.join("tools");
+            std::fs::create_dir_all(&root).map_err(|e| e.to_string())?;
+            let sys = |exe: &str| -> std::path::PathBuf {
+                if cfg!(windows) { Path::new(&std::env::var_os("SystemRoot").unwrap_or_else(|| "C:\\Windows".into())).join("System32").join(format!("{exe}.exe")) }
+                else { exe.into() }
+            };
+            let api = quiet_command(sys("curl")).args(["-sfL", "-H", "Accept: application/vnd.github+json", "-A", "NppDev", "https://api.github.com/repos/JetBrains/kotlin/releases/latest"])
+                .output().map_err(|e| e.to_string())?;
+            let release: serde_json::Value = serde_json::from_slice(&api.stdout).map_err(|_| "Couldn't reach GitHub to find the Kotlin compiler.")?;
+            let url = release["assets"].as_array().into_iter().flatten()
+                .find(|a| a["name"].as_str().is_some_and(|n| n.starts_with("kotlin-compiler-") && n.ends_with(".zip")))
+                .and_then(|a| a["browser_download_url"].as_str()).ok_or("The latest Kotlin release has no compiler zip.")?.to_string();
+            let zip = root.join("kotlin-compiler.zip");
+            let ok = quiet_command(sys("curl")).args(["-sfL", "--retry", "2", "-o"]).arg(&zip).arg(&url).status().map(|s| s.success()).unwrap_or(false);
+            if !ok { return Err("Couldn't download the Kotlin compiler. Check your internet connection.".into()); }
+            let _ = std::fs::remove_dir_all(root.join("kotlinc"));
+            // the zip holds a kotlinc/ folder; Windows' tar reads zips, Linux has unzip
+            let ok = if cfg!(windows) { quiet_command(sys("tar")).arg("-xf").arg(&zip).arg("-C").arg(&root).status() }
+                else { quiet_command("unzip").arg("-q").arg("-o").arg(&zip).arg("-d").arg(&root).status() }
+                .map(|s| s.success()).unwrap_or(false);
+            let _ = std::fs::remove_file(&zip);
+            if !ok { return Err("Couldn't unpack the Kotlin compiler.".into()); }
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                for f in ["kotlinc", "kotlin"] {
+                    let p = root.join("kotlinc").join("bin").join(f);
+                    if let Ok(m) = std::fs::metadata(&p) { let mut perm = m.permissions(); perm.set_mode(0o755); let _ = std::fs::set_permissions(&p, perm); }
+                }
+            }
+            tools::forget();
+            Ok("Kotlin is installed.".into())
+        }
         "pylsp" => {
             let py = tools::find("python").ok_or("Install Python first.")?;
             let o = quiet_command(&py).args(["-m", "pip", "install", "--user", "--quiet", "python-lsp-server"]).output().map_err(|e| e.to_string())?;
@@ -118,11 +154,17 @@ pub async fn install_language(app: AppHandle, key: String) -> Result<String, Str
             #[cfg(windows)]
             {
                 use std::os::windows::process::CommandExt;
-                std::process::Command::new("winget")
+                // its own window, so the user sees it and can approve prompts; NppDev waits for it
+                let status = std::process::Command::new("winget")
                     .args(["install", "--id", id, "--exact", "--source", "winget"])
-                    .creation_flags(0x0000_0010) // its own window, so the user sees and approves it
-                    .spawn().map_err(|_| "winget isn't available on this PC.".to_string())?;
-                Ok("The installer opened in its own window. Press Refresh when it's done.".into())
+                    .creation_flags(0x0000_0010)
+                    .status()
+                    .map_err(|_| "winget isn't available on this PC. Install \"App Installer\" from the Microsoft Store, then try again.".to_string())?;
+                tools::forget(); // also re-reads PATH, so the new compiler is found without restarting
+                lsp::forget_checks();
+                let name = ROWS.iter().find(|r| r.0 == other).map(|r| r.1).unwrap_or(other);
+                if status.success() { Ok(format!("{name} is installed.")) }
+                else { Err(format!("The {name} installer didn't finish (code {}).", status.code().unwrap_or(-1))) }
             }
             #[cfg(not(windows))]
             { let _ = id; Err("Run the command shown, then press Refresh.".into()) }

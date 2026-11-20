@@ -63,11 +63,11 @@ NppDev is a desktop editor made for solving problems: open a file, type the inpu
 
 * **Run with one key.** <kbd>Ctrl</kbd>+<kbd>Enter</kbd> compiles (only when the code changed) and runs the file. The panel on the right has three boxes, like an online compiler: **Input**, **Output** and an optional **Expected output**.
 * **Judge verdicts.** Accepted, Wrong Answer (the differing lines are marked), Runtime Error (with the reason, e.g. a bad pointer or stack overflow), Time Limit Exceeded, Memory Limit Exceeded or the compiler's message, with the time and memory the program used. Time and memory limits are yours to set.
-* **LeetCode-style solutions run as they are.** A file with only `class Solution` (C++, Java, Python or JavaScript) runs like on LeetCode: each line of the Input is one argument (`[2,7,11,15]`, `9`), and the answer is printed in LeetCode's format. `ListNode` and `TreeNode` work too.
 * **IntelliSense.** Completions, errors as you type, go to definition and rename, from clangd (C/C++), pylsp (Python) and jdtls (Java); JavaScript and TypeScript are built in.
 * **Command Palette and Quick Open.** <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> for any command, <kbd>Ctrl</kbd>+<kbd>P</kbd> for any file in the folder.
 * **Snippets** for competitive programming (`cp`, `fori`, `dsu`, `segtree`, `dijkstra`, ...), plus your own.
-* **Settings** (<kbd>Ctrl</kbd>+<kbd>,</kbd>): dark or light theme, editor font and size, update check, and a **Languages** list that shows which compilers and language servers work, with one-click installs.
+* **Auto save.** Files save themselves a second after you stop typing (you can turn it off in Settings).
+* **Settings** (<kbd>Ctrl</kbd>+<kbd>,</kbd>): dark or light theme, editor font and size, auto save, update check, and a **Languages** list that shows which compilers and language servers work, with one-click installs.
 * **Updates ask first.** When a new release is out, NppDev shows a box: Update now, Skip this version, or Later.
 * **Fits into Windows.** Start menu entry, "Open with NppDev" on files and folders in File Explorer, one window for everything you open.
 * **Small.** One 6.5 MB program; your projects are never changed by NppDev's settings or tests.
@@ -102,7 +102,7 @@ Or download the `.AppImage`, make it executable (`chmod +x NppDev_*.AppImage`) a
 
 ### Compilers
 
-NppDev uses the compilers on your computer. **Settings > Languages** shows which ones it found and installs the missing ones (on Windows through winget; on Ubuntu it shows the `apt` command to run). Java IntelliSense (jdtls) and Python IntelliSense (pylsp) install with one click.
+NppDev uses the compilers on your computer. **Settings > Languages** shows which ones it found and installs the missing ones: on Windows through winget (GCC, Java, Python, Node.js, Go, Rust, clangd), and directly for Kotlin, Java IntelliSense (jdtls) and Python IntelliSense (pylsp). On Ubuntu it shows the `apt` command to run.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -116,11 +116,7 @@ NppDev uses the compilers on your computer. **Settings > Languages** shows which
 
 Each file keeps its own Input and Expected output, so switching between problems is instant.
 
-For a LeetCode problem, paste LeetCode's starter code and the example arguments, one per line:
-
-```
-[-1,0,1,2,-1,-4]
-```
+**LeetCode answers run as they are.** Paste your solution exactly as you write it on LeetCode (no `main` needed), put the example's values in the Input box, one per line (for example `[2,7,11,15]` and then `9`), and press <kbd>Ctrl</kbd>+<kbd>Enter</kbd>. NppDev calls your function with them and prints the result the way LeetCode shows it.
 
 <p align="center">
   <img src="docs/screenshot-light.png" alt="NppDev in the light theme" width="100%">
@@ -181,7 +177,7 @@ npx tauri build --bundles deb,appimage     # Ubuntu packages
 cargo test --manifest-path src-tauri/Cargo.toml --lib -- --test-threads=1   # judge tests
 ```
 
-The judge tests compile and run real programs in every installed language and check each verdict, including LeetCode-style solutions. They also run on Ubuntu for every push.
+The judge tests compile and run real programs in every installed language and check each verdict, LeetCode answers included. They also run on Ubuntu for every push.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -190,7 +186,6 @@ The judge tests compile and run real programs in every installed language and ch
 ## Roadmap
 
 - [x] Run and judge with time and memory limits
-- [x] LeetCode-style `class Solution` files
 - [x] IntelliSense for C/C++, Java, Python, JavaScript
 - [x] Settings with one-click language installs
 - [x] Update prompt

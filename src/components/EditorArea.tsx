@@ -1,13 +1,17 @@
 // Tabs and the code editor (one Monaco editor; each open file is a model). Shows Welcome when empty.
-import { useEffect, useRef } from "react";
-import { monaco, EDITOR_OPTIONS } from "../lib/editor";
+// Monaco is a separate chunk loaded in the background (see lib/workspace.ts), so the window draws
+// first and the editor appears a moment later.
+import { useEffect, useRef, useState } from "react";
+import type { monaco as Monaco } from "../lib/editor";
 import * as ws from "../lib/workspace";
-import { fileType } from "../lib/fileTypes";
 import { useApp } from "../store";
 import { useCursor } from "../lib/cursor";
 import { useRun, canRun } from "../run";
 import { Icon } from "./Icons";
+import { FileIcon } from "./FileIcon";
 import { Welcome } from "./Welcome";
+
+type EditorModule = typeof import("../lib/editor");
 
 export function EditorArea() {
   const tabs = useApp((s) => s.tabs);
@@ -20,36 +24,48 @@ export function EditorArea() {
   const running = useRun((s) => s.running);
   const { run, stop } = useRun.getState();
   const host = useRef<HTMLDivElement>(null);
-  const editor = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const editor = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
+  const mod = useRef<EditorModule | null>(null);
   const shown = useRef<string | null>(null);
+  const [ready, setReady] = useState(false);
+  const family = `"${editorFont}", Hack, Consolas, "Ubuntu Mono", monospace`;
 
-  // the editor is created once and kept; switching tabs swaps its model
+  // the editor is created once (when Monaco has loaded) and kept; switching tabs swaps its model
   useEffect(() => {
-    if (!host.current) return;
-    const ed = monaco.editor.create(host.current, { ...EDITOR_OPTIONS, theme: theme === "dark" ? "nppdev-dark" : "nppdev-light", fontSize, model: null });
-    editor.current = ed;
-    ed.onDidChangeCursorPosition((e) => useCursor.setState({ line: e.position.lineNumber, col: e.position.column }));
-    // Ctrl+S inside the editor (Monaco takes the key before the window sees it)
-    ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => useApp.getState().save());
-    ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyS, () => useApp.getState().saveAs());
-    ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => useRun.getState().run());
-    (window as unknown as { nppdevEditor: unknown }).nppdevEditor = ed;
-    // measure again once every font is in, so the caret lines up with the letters exactly
-    const remeasure = () => monaco.editor.remeasureFonts();
-    document.fonts.ready.then(remeasure);
-    document.fonts.addEventListener("loadingdone", remeasure);
-    return () => { document.fonts.removeEventListener("loadingdone", remeasure); ed.dispose(); };
+    let disposed = false;
+    let cleanup = () => {};
+    ws.monacoReady.then((m) => {
+      if (disposed || !host.current) return;
+      const { monaco, EDITOR_OPTIONS } = m;
+      mod.current = m;
+      const s = useApp.getState();
+      const ed = monaco.editor.create(host.current, { ...EDITOR_OPTIONS, theme: s.theme === "dark" ? "nppdev-dark" : "nppdev-light", fontSize: s.fontSize, fontFamily: family, model: null });
+      editor.current = ed;
+      ed.onDidChangeCursorPosition((e) => useCursor.setState({ line: e.position.lineNumber, col: e.position.column }));
+      // Ctrl+S inside the editor (Monaco takes the key before the window sees it)
+      ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => useApp.getState().save());
+      ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyS, () => useApp.getState().saveAs());
+      ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => useRun.getState().run());
+      (window as unknown as { nppdevEditor: unknown }).nppdevEditor = ed;
+      // measure again once every font is in, so the caret lines up with the letters exactly
+      const remeasure = () => monaco.editor.remeasureFonts();
+      document.fonts.ready.then(remeasure);
+      document.fonts.addEventListener("loadingdone", remeasure);
+      cleanup = () => { document.fonts.removeEventListener("loadingdone", remeasure); ed.dispose(); };
+      setReady(true);
+    });
+    return () => { disposed = true; cleanup(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => { monaco.editor.setTheme(theme === "dark" ? "nppdev-dark" : "nppdev-light"); }, [theme]);
-  useEffect(() => { editor.current?.updateOptions({ fontSize }); }, [fontSize]);
+  useEffect(() => { mod.current?.monaco.editor.setTheme(theme === "dark" ? "nppdev-dark" : "nppdev-light"); }, [theme, ready]);
+  useEffect(() => { editor.current?.updateOptions({ fontSize }); }, [fontSize, ready]);
   useEffect(() => {
-    const family = `"${editorFont}", Hack, Consolas, "Ubuntu Mono", monospace`;
     document.documentElement.style.setProperty("--code", family);
     editor.current?.updateOptions({ fontFamily: family });
-    document.fonts.load(`15px "${editorFont}"`).catch(() => {}).finally(() => monaco.editor.remeasureFonts());
-  }, [editorFont]);
+    document.fonts.load(`15px "${editorFont}"`).catch(() => {}).finally(() => mod.current?.monaco.editor.remeasureFonts());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editorFont, ready]);
 
   // show the active tab's document, keeping each one's cursor and scroll position
   useEffect(() => {
@@ -64,32 +80,29 @@ export function EditorArea() {
       if (doc.view) ed.restoreViewState(doc.view);
       requestAnimationFrame(() => ed.focus());
     }
-  }, [active, tabs]);
+  }, [active, tabs, ready]);
 
   return (
     <div className="editor-area">
       {tabs.length > 0 && (
         <div className="tab-bar">
         <div className="tabs" onWheel={(e) => { e.currentTarget.scrollLeft += e.deltaY; }}>
-          {tabs.map((t) => {
-            const ft = fileType(t.name);
-            return (
-              <div
-                key={t.path}
-                className={"tab" + (t.path === active ? " active" : "") + (dirty[t.path] ? " dirty" : "")}
-                onClick={() => activate(t.path)}
-                onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); closeTab(t.path); } }}
-                title={ws.isUntitled(t.path) ? t.name : t.path}
-              >
-                <span className="file-glyph" style={{ color: ft.color }}>{ft.glyph || <span className="page" />}</span>
-                <span className="tab-name">{t.name}</span>
-                <button className="tab-close" title="Close (Ctrl+W)" onClick={(e) => { e.stopPropagation(); closeTab(t.path); }}>
-                  <span className="dot" />
-                  {Icon.close(14)}
-                </button>
-              </div>
-            );
-          })}
+          {tabs.map((t) => (
+            <div
+              key={t.path}
+              className={"tab" + (t.path === active ? " active" : "") + (dirty[t.path] ? " dirty" : "")}
+              onClick={() => activate(t.path)}
+              onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); closeTab(t.path); } }}
+              title={ws.isUntitled(t.path) ? t.name : t.path}
+            >
+              <FileIcon name={t.name} />
+              <span className="tab-name">{t.name}</span>
+              <button className="tab-close" title="Close (Ctrl+W)" onClick={(e) => { e.stopPropagation(); closeTab(t.path); }}>
+                <span className="dot" />
+                {Icon.close(14)}
+              </button>
+            </div>
+          ))}
         </div>
         {canRun(active) && (
           running

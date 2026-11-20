@@ -6,8 +6,9 @@ import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialo
 import { api, baseName } from "./lib/api";
 import * as ws from "./lib/workspace";
 import { fileType } from "./lib/fileTypes";
-import { ensureLsp, stopAllLsp, onLspProblem } from "./lib/lsp";
-import { loadUserSnippets, registerSnippets, userSnippetsPath } from "./lib/snippets";
+// IntelliSense and snippets need Monaco: loaded on first use, not at startup
+const lsp = () => import("./lib/lsp");
+const snippets = () => import("./lib/snippets");
 
 export type Theme = "dark" | "light";
 
@@ -32,6 +33,8 @@ interface Persisted {
   /** A release the user chose to skip in the update box. */
   skippedVersion: string | null;
   editorFont: string;
+  /** Save files by themselves a moment after typing stops (on by default). */
+  autoSave: boolean;
 }
 
 export interface Confirm {
@@ -61,10 +64,10 @@ interface State extends Persisted {
   openFolder(path?: string): Promise<void>;
   closeFolder(): Promise<void>;
   openFile(path: string): Promise<void>;
-  newFile(): void;
+  newFile(): Promise<void>;
   activate(path: string): void;
   closeTab(path: string): Promise<boolean>;
-  save(path?: string): Promise<void>;
+  save(path?: string, quiet?: boolean): Promise<void>;
   saveAs(path?: string): Promise<void>;
   saveAll(): Promise<void>;
   pathRenamed(from: string, to: string): void;
@@ -76,13 +79,14 @@ interface State extends Persisted {
   /** Show this sidebar view; clicking the one already shown hides the sidebar. */
   showSide(view: "explorer" | "settings"): void;
   setEditorFont(font: string): void;
+  setAutoSave(on: boolean): void;
   setSidebarWidth(w: number): void;
   setDefaultLang(id: string): void;
   setFontSize(size: number): void;
   setSkippedVersion(v: string | null): void;
 }
 
-const DEFAULTS: Persisted = { theme: "dark", recent: [], lastFolder: null, sessions: {}, sidebarWidth: 260, fontSize: 15, defaultLang: "cpp", skippedVersion: null, editorFont: "Hack" };
+const DEFAULTS: Persisted = { theme: "dark", recent: [], lastFolder: null, sessions: {}, sidebarWidth: 260, fontSize: 15, defaultLang: "cpp", skippedVersion: null, editorFont: "Hack", autoSave: true };
 let saveTimer = 0;
 
 export const useApp = create<State>((set, get) => {
@@ -91,7 +95,7 @@ export const useApp = create<State>((set, get) => {
     clearTimeout(saveTimer);
     saveTimer = window.setTimeout(() => {
       const s = get();
-      const out: Persisted = { theme: s.theme, recent: s.recent, lastFolder: s.folder, sessions: s.sessions, sidebarWidth: s.sidebarWidth, fontSize: s.fontSize, defaultLang: s.defaultLang, skippedVersion: s.skippedVersion, editorFont: s.editorFont };
+      const out: Persisted = { theme: s.theme, recent: s.recent, lastFolder: s.folder, sessions: s.sessions, sidebarWidth: s.sidebarWidth, fontSize: s.fontSize, defaultLang: s.defaultLang, skippedVersion: s.skippedVersion, editorFont: s.editorFont, autoSave: s.autoSave };
       if (s.folder) out.sessions = { ...s.sessions, [s.folder]: { tabs: s.tabs.map((t) => t.path).filter((p) => !ws.isUntitled(p)), active: s.active && !ws.isUntitled(s.active) ? s.active : null } };
       api.saveSettings(JSON.stringify(out, null, 1)).catch(() => {});
     }, 500);
@@ -122,9 +126,20 @@ export const useApp = create<State>((set, get) => {
       let saved: Partial<Persisted> = {};
       try { saved = JSON.parse(await api.loadSettings()); } catch { /* first start */ }
       set({ ...DEFAULTS, ...saved, ready: true });
-      onLspProblem((text) => get().notify(text));
-      registerSnippets();
-      loadUserSnippets();
+      lsp().then((m) => m.onLspProblem((text) => get().notify(text)));
+      // auto save: a second after typing stops, and when leaving the window (named files only)
+      const timers = new Map<string, number>();
+      const saveSoon = (path: string) => {
+        if (!get().autoSave || ws.isUntitled(path)) return;
+        clearTimeout(timers.get(path));
+        timers.set(path, window.setTimeout(() => { timers.delete(path); if (ws.isDirty(path)) get().save(path, true); }, 1000));
+      };
+      ws.onEdit(saveSoon);
+      window.addEventListener("blur", () => {
+        if (!get().autoSave) return;
+        for (const t of get().tabs) if (!ws.isUntitled(t.path) && ws.isDirty(t.path)) get().save(t.path, true);
+      });
+      snippets().then((m) => { m.registerSnippets(); m.loadUserSnippets(); });
       document.documentElement.dataset.theme = get().theme;
       const asked = await invoke<string[]>("startup_paths").catch(() => [] as string[]);
       const isDir = async (p: string) => api.listDir(p).then(() => true, () => false);
@@ -161,7 +176,7 @@ export const useApp = create<State>((set, get) => {
         return;
       }
       rememberSession();
-      if (path !== get().folder) stopAllLsp();
+      if (path !== get().folder) lsp().then((m) => m.stopAllLsp());
       // close the old folder's saved tabs (unsaved ones stay open)
       for (const t of get().tabs) if (!ws.isDirty(t.path)) ws.closeDoc(t.path);
       const keep = get().tabs.filter((t) => ws.isDirty(t.path));
@@ -185,17 +200,20 @@ export const useApp = create<State>((set, get) => {
       if (!get().tabs.some((t) => t.path === path)) {
         try { await ws.openDoc(path); } catch (e) { get().notify(String(e), "error"); return; }
         set((s) => ({ tabs: [...s.tabs, { path, name: baseName(path) }] }));
-        ensureLsp(fileType(baseName(path)).lang, get().folder);
+        const folder = get().folder;
+        lsp().then((m) => m.ensureLsp(fileType(baseName(path)).lang, folder));
       }
       get().activate(path);
     },
 
-    newFile() {
-      const path = ws.newUntitled();
+    async newFile() {
+      const path = await ws.newUntitled();
       set((s) => ({ tabs: [...s.tabs, { path, name: path.slice("untitled:".length) }], active: path }));
     },
 
     activate(path) {
+      const prev = get().active;
+      if (get().autoSave && prev && prev !== path && !ws.isUntitled(prev) && ws.isDirty(prev)) get().save(prev, true);
       set({ active: path });
       persist();
     },
@@ -227,14 +245,15 @@ export const useApp = create<State>((set, get) => {
       return true;
     },
 
-    async save(path) {
+    async save(path, quiet) {
       path = path ?? get().active ?? undefined;
       if (!path) return;
-      if (ws.isUntitled(path)) return get().saveAs(path);
+      if (ws.isUntitled(path)) return quiet ? undefined : get().saveAs(path);
       try { await ws.saveDoc(path); } catch (e) { get().notify(String(e), "error"); return; }
-      if (path === userSnippetsPath()) {
-        const err = await loadUserSnippets();
-        get().notify(err ?? "Snippets reloaded.", err ? "error" : "info");
+      const sn = await snippets();
+      if (path === sn.userSnippetsPath()) {
+        const err = await sn.loadUserSnippets();
+        if (err || !quiet) get().notify(err ?? "Snippets reloaded.", err ? "error" : "info");
       }
     },
 
@@ -294,6 +313,10 @@ export const useApp = create<State>((set, get) => {
 
     toggleSidebar: () => set((s) => ({ sidebarVisible: !s.sidebarVisible })),
     showSide: (view) => set((s) => (s.sidebarVisible && s.sideView === view ? { sidebarVisible: false } : { sidebarVisible: true, sideView: view })),
+    setAutoSave(autoSave) {
+      set({ autoSave });
+      persist();
+    },
     setEditorFont(editorFont) {
       set({ editorFont });
       persist();

@@ -101,7 +101,7 @@ fn start(app: AppHandle, lang: &str) -> Result<Started, String> {
             let config = dir.join(if cfg!(windows) { "config_win" } else { "config_linux" });
             let mut c = quiet_command(java);
             c.args(["-Declipse.application=org.eclipse.jdt.ls.core.id1", "-Dosgi.bundles.defaultStartLevel=4", "-Declipse.product=org.eclipse.jdt.ls.core.product",
-                "-XX:+UseParallelGC", "-XX:GCTimeRatio=4", "-XX:AdaptiveSizePolicyWeight=90", "-Dsun.zip.disableMemoryMapping=true", "-Xms100m", "-Xmx1G",
+                "-XX:+UseParallelGC", "-XX:GCTimeRatio=4", "-XX:AdaptiveSizePolicyWeight=90", "-Dsun.zip.disableMemoryMapping=true", "-Xms64m", "-Xmx512m",
                 "-XX:+AutoCreateSharedArchive", "-Xlog:disable", "--add-modules=ALL-SYSTEM", "--add-opens", "java.base/java.util=ALL-UNNAMED", "--add-opens", "java.base/java.lang=ALL-UNNAMED"]);
             c.arg(format!("-XX:SharedArchiveFile={}", root.join("jdtls.jsa").display()));
             c.arg("-jar").arg(launcher).arg("-configuration").arg(config).arg("-data").arg(root.join("jdtls-workspace"));

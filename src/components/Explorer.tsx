@@ -4,6 +4,7 @@ import { api, baseName, dirName, joinPath, type Entry } from "../lib/api";
 import { fileType } from "../lib/fileTypes";
 import { useApp } from "../store";
 import { Icon } from "./Icons";
+import { FileIcon, FolderIcon } from "./FileIcon";
 
 type Pending = { kind: "file" | "folder"; dir: string } | { kind: "rename"; path: string } | null;
 interface Menu { x: number; y: number; entry: Entry | null }
@@ -131,7 +132,6 @@ export function Explorer() {
         continue;
       }
       const open = e.isDir && expanded.has(e.path);
-      const t = fileType(e.name);
       rows.push(
         <div
           key={e.path}
@@ -144,7 +144,7 @@ export function Explorer() {
           tabIndex={0}
         >
           <span className="twisty">{e.isDir ? Icon.chevron(open) : null}</span>
-          {e.isDir ? Icon.folder(open) : <span className="file-glyph" style={{ color: t.color }}>{t.glyph || <span className="page" />}</span>}
+          {e.isDir ? <FolderIcon open={open} /> : <FileIcon name={e.name} />}
           <span className="tree-name">{e.name}</span>
         </div>,
       );
@@ -201,7 +201,7 @@ function InlineInput({ depth, kind, initial, onDone }: { depth: number; kind: "f
   return (
     <div className="tree-row editing" style={{ paddingLeft: 8 + depth * 14 }}>
       <span className="twisty" />
-      {kind === "folder" ? Icon.folder(false) : <span className="file-glyph" />}
+      {kind === "folder" ? <FolderIcon open={false} /> : <FileIcon name="new" />}
       <input
         ref={ref}
         defaultValue={initial}

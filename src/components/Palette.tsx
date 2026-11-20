@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
 import { useApp } from "../store";
 import { allCommands, fuzzy, type Command } from "../lib/commands";
-import { fileType } from "../lib/fileTypes";
+import { FileIcon } from "./FileIcon";
 import { joinPath } from "../lib/api";
 
 export const usePalette = create<{ open: boolean; text: string; show(text: string): void; hide(): void }>((set) => ({
@@ -71,13 +71,12 @@ export function Palette() {
     }).filter((x) => x.score >= 0);
     if (q) all.sort((a, b) => b.score - a.score);
     return all.slice(0, 60).map((f) => {
-      const ft = fileType(f.name);
       const full = joinPath(folder, f.rel.replace(/\//g, folder.includes("\\") ? "\\" : "/"));
       return {
         key: f.rel, label: f.name, hits: f.hits,
         detail: f.rel.includes("/") ? f.rel.slice(0, f.rel.lastIndexOf("/")) : undefined,
         keys: openTabs.includes(full) ? "open" : undefined,
-        icon: <span className="file-glyph" style={{ color: ft.color }}>{ft.glyph || <span className="page" />}</span>,
+        icon: <FileIcon name={f.name} />,
         run: () => { useApp.getState().openFile(full); },
       };
     });

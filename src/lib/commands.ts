@@ -2,7 +2,6 @@
 import { useApp } from "../store";
 import { useRun } from "../run";
 import type { monaco } from "./editor";
-import { openUserSnippets } from "./snippets";
 import { checkForUpdate } from "./update";
 
 export interface Command {
@@ -41,7 +40,7 @@ export function allCommands(): Command[] {
     { id: "view.zoomReset", label: "View: Reset Font Size", keys: "Ctrl+0", run: () => app().setFontSize(15) },
     { id: "update", label: "Check for Updates", run: () => checkForUpdate(true) },
     { id: "settings", label: "Preferences: Open Settings", keys: "Ctrl+,", run: () => { if (!(app().sidebarVisible && app().sideView === "settings")) app().showSide("settings"); } },
-    { id: "snippets.edit", label: "Preferences: Edit My Snippets", run: () => openUserSnippets() },
+    { id: "snippets.edit", label: "Preferences: Edit My Snippets", run: () => { import("./snippets").then((m) => m.openUserSnippets()); } },
     { id: "go.line", label: "Go to Line…", keys: "Ctrl+G", run: action("editor.action.gotoLine") },
     { id: "go.def", label: "Go to Definition", keys: "F12", run: action("editor.action.revealDefinition") },
     { id: "go.refs", label: "Find All References", keys: "Shift+F12", run: action("editor.action.referenceSearch.trigger") },
