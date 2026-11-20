@@ -1,0 +1,31 @@
+[package]
+name = "nppdev"
+version = "2.0.0"
+description = "NppDev - a fast, VS Code-style editor for coding practice"
+authors = ["Rohith Prem"]
+license = "GPL-3.0"
+repository = "https://github.com/rohithprem18/NppDev"
+edition = "2024"
+rust-version = "1.90"
+
+[lib]
+name = "nppdev_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.7.6", features = [] }
+
+[dependencies]
+tauri = { version = "2.12.7", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-window-state = "2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+trash = "5"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

@@ -1,0 +1,30 @@
+{
+  "name": "nppdev",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "description": "NppDev - a fast, VS Code-style editor for coding practice",
+  "author": "Rohith Prem",
+  "license": "GPL-3.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.12.5",
+    "@tauri-apps/plugin-dialog": "^2.8.4",
+    "monaco-editor": "^0.57.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zustand": "^5.1.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.12.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8"
+  }
+}

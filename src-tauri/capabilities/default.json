@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "What NppDev's window may use: its own commands, folder/file pickers, window state",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-set-title",
+    "core:window:allow-destroy",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "dialog:allow-ask",
+    "dialog:allow-message",
+    "window-state:default"
+  ]
+}
