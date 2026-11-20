@@ -88,7 +88,8 @@ class TauriTransport {
       if (this.def.key === "cpp") params.initializationOptions = { fallbackFlags: ["-std=gnu++20"] };
     }
     // each server sees only its own files; requests about other files get an empty answer
-    const uri = (params.textDocument as Json | undefined)?.uri as string | undefined;
+    const doc = params.textDocument as Json | undefined;
+    let uri = doc?.uri as string | undefined;
     if (uri) {
       if (!uri.startsWith("file:") || !this.def.files.test(uriPath(uri))) {
         if (m.id !== undefined && this.listener) {
@@ -97,14 +98,25 @@ class TauriTransport {
         }
         return;
       }
-      this.uris.set(uriKey(uri), uri);
-      // clangd: compile each file the way NppDev's Run does, so g++'s headers (bits/stdc++.h) resolve
+      // Monaco's LSP client lowercases the file path when it opens and edits a document, but not
+      // when it asks about it, so the server saw two different files (and answered completions from
+      // the copy on disk). Every path goes out as the file's real one; answers come back in the form
+      // the client looks up.
+      // (on a copy: the client reuses its own request object afterwards, with its own spelling)
+      const model = monaco.editor.getModels().find((md) => uriKey(md.uri.toString()) === uriKey(uri!));
+      if (model) {
+        uri = model.uri.toString();
+        this.uris.set(uriKey(uri), model.uri.toString(true));
+        m = { ...m, params: { ...params, textDocument: { ...doc, uri } } };
+      }
+      // clangd: compile each file the way NppDev's Run does, so g++'s headers (bits/stdc++.h) resolve.
+      // Queued together with the didOpen (no await in between), so nothing can slip ahead of it.
       if (method === "textDocument/didOpen" && this.def.key === "cpp" && this.compiler) {
         const file = uriPath(uri);
         const isC = /\.c$/i.test(file);
         const command = [this.compiler, isC ? "-std=gnu17" : "-std=gnu++20", "-DONLINE_JUDGE", "-x", isC ? "c" : "c++", file];
         const dir = file.replace(/[\\/][^\\/]*$/, "");
-        await this.post({ jsonrpc: "2.0", method: "workspace/didChangeConfiguration", params: { settings: { compilationDatabaseChanges: { [file]: { workingDirectory: dir, compilationCommand: command } } } } });
+        this.post({ jsonrpc: "2.0", method: "workspace/didChangeConfiguration", params: { settings: { compilationDatabaseChanges: { [file]: { workingDirectory: dir, compilationCommand: command } } } } });
       }
     }
     await this.post(m);

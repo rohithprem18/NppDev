@@ -129,7 +129,9 @@ fn start(app: AppHandle, lang: &str) -> Result<Started, String> {
             }
             let mut buf = vec![0u8; len];
             if r.read_exact(&mut buf).is_err() { let _ = app.emit("lsp-exit", id); forget(id); return; }
-            let _ = app.emit("lsp-message", Msg { id, msg: String::from_utf8_lossy(&buf).into_owned() });
+            let text = String::from_utf8_lossy(&buf).into_owned();
+            trace(id, "<-", &text);
+            let _ = app.emit("lsp-message", Msg { id, msg: text });
         }
     });
     Ok(Started { id, compiler })
@@ -139,8 +141,19 @@ fn forget(id: u32) {
     if let Some(m) = SERVERS.lock().unwrap().as_mut() { m.remove(&id); }
 }
 
+/// Troubleshooting: with NPPDEV_LSP_LOG=<file> set, every message to and from the language
+/// servers is appended to that file.
+fn trace(id: u32, dir: &str, msg: &str) {
+    if let Some(path) = std::env::var_os("NPPDEV_LSP_LOG") {
+        if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
+            let _ = writeln!(f, "{id} {dir} {msg}");
+        }
+    }
+}
+
 #[tauri::command]
 pub fn lsp_send(id: u32, msg: String) -> Result<(), String> {
+    trace(id, "->", &msg);
     let mut g = SERVERS.lock().unwrap();
     let s = g.as_mut().and_then(|m| m.get_mut(&id)).ok_or("The language server has stopped.")?;
     let framed = format!("Content-Length: {}\r\n\r\n{}", msg.len(), msg);
