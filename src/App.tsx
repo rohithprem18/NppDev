@@ -7,6 +7,8 @@ import { Explorer } from "./components/Explorer";
 import { EditorArea } from "./components/EditorArea";
 import { invoke } from "@tauri-apps/api/core";
 import { RunPanel } from "./components/RunPanel";
+import { ImportDialog } from "./components/ImportDialog";
+import { useImport } from "./import";
 import { useRun } from "./run";
 import { ActivityBar, StatusBar, ConfirmDialog, Toast } from "./components/Chrome";
 
@@ -32,6 +34,7 @@ export default function App() {
       const ctrl = e.ctrlKey || e.metaKey;
       if (!ctrl) return;
       const k = e.key.toLowerCase();
+      if (k === "i" && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); useImport.getState().show(true); return; }
       if (k === "enter") { e.preventDefault(); e.stopPropagation(); useRun.getState().run(); return; }
       if (k === "s" && !e.shiftKey) { e.preventDefault(); s.save(); }
       else if (k === "s" && e.shiftKey) { e.preventDefault(); s.saveAs(); }
@@ -103,6 +106,7 @@ export default function App() {
         )}
       </div>
       <StatusBar />
+      <ImportDialog />
       <ConfirmDialog />
       <Toast />
     </div>

@@ -71,7 +71,7 @@ interface RunState {
 
   toggle(open?: boolean): void;
   setWidth(w: number): void;
-  load(path: string | null): Promise<void>;
+  load(path: string | null, force?: boolean): Promise<void>;
   addTest(input?: string, expected?: string): void;
   updateTest(id: number, patch: Partial<Pick<Test, "input" | "expected">>): void;
   removeTest(id: number): void;
@@ -131,10 +131,10 @@ export const useRun = create<RunState>((set, get) => {
     toggle: (open) => set((s) => ({ open: open ?? !s.open })),
     setWidth: (w) => set({ width: Math.max(300, Math.min(900, w)) }),
 
-    async load(path) {
-      if (path === get().path) return;
+    async load(path, force) {
+      if (path === get().path && !force) return;
       clearTimeout(saveTimer);
-      if (get().path) persist(); // flush the previous file's edits
+      if (get().path && get().path !== path) persist(); // flush the previous file's edits
       set({ path, tests: [], compile: null, missing: null, error: null, problem: null, timeLimitMs: DEFAULT_TL, memoryLimitMb: DEFAULT_ML });
       if (!canRun(path)) return;
       const saved = (await invoke<Saved | null>("load_tests", { path }).catch(() => null)) ?? null;

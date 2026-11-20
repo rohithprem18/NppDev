@@ -53,7 +53,7 @@ OS                         Windows: WebView2 · Ubuntu: WebKitGTK
       time & memory limits; compile cache; C++ PCH.
 - [ ] **M3 — editing**: LSP IntelliSense (clangd, jdtls, pylsp, TypeScript); built-in + user snippets;
       Command Palette; Quick Open; VS Code keys.
-- [ ] **M4 — problem import**: Competitive Companion listener; import by URL for Codeforces, AtCoder, HackerRank, HackerEarth, NeetCode,
+- [x] **M4 — problem import**: Competitive Companion listener; import by URL for Codeforces, AtCoder, HackerRank, HackerEarth, NeetCode,
       CodeChef, GeeksforGeeks, LeetCode; creates the file + test cases.
 - [ ] **M5 — tools & extras**: tools detection + one-click installer; integrated terminal; Git panel;
       stress testing; settings export/import.
@@ -71,3 +71,9 @@ OS                         Windows: WebView2 · Ubuntu: WebKitGTK
   Run panel (src/run.ts, RunPanel.tsx; Ctrl+Enter, per-test run, diff on WA, limits).
   `cargo test --lib` judges C++/Java/Python/JS/Rust/C# programs for AC/WA/RE/TLE/MLE/CE.
   Not tested here: Go, Kotlin (not installed on this PC); Linux paths (needs Ubuntu CI).
+- 2026-11-20 — M4 done: src-tauri/src/import.rs (Competitive Companion listener on 27121, falls back
+  to CC's other default ports; URL import for Codeforces (curl fallback past Cloudflare), AtCoder,
+  CodeChef API, LeetCode GraphQL (+ starter code), NeetCode (mapped to LeetCode via its bundle),
+  GfG practice API, HackerRank REST (STDIN/Function notes stripped), HackerEarth (Next.js payload)).
+  `cargo test --lib import -- --ignored` checks all 8 sites live. UI: Ctrl+I dialog, src/import.ts,
+  src/lib/templates.ts (9 languages). Tested in the app: Codeforces link + simulated CC POST.

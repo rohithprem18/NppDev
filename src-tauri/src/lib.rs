@@ -1,4 +1,5 @@
 mod fs;
+mod import;
 mod runner;
 mod settings;
 mod tests;
@@ -9,7 +10,16 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
+        .setup(|app| {
+            use tauri::Manager;
+            // Competitive Companion sends problems here from the browser
+            let port = import::listen(app.handle().clone());
+            app.manage(import::CompanionPort(port));
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
+            import::import_problem,
+            import::companion_port,
             fs::list_dir,
             fs::read_text,
             fs::write_text,

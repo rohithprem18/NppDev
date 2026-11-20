@@ -23,6 +23,7 @@ interface Persisted {
   sessions: Record<string, Session>;
   sidebarWidth: number;
   fontSize: number;
+  defaultLang: string;
 }
 
 export interface Confirm {
@@ -63,9 +64,10 @@ interface State extends Persisted {
   toggleSidebar(): void;
   setCursor(line: number, col: number): void;
   setSidebarWidth(w: number): void;
+  setDefaultLang(id: string): void;
 }
 
-const DEFAULTS: Persisted = { theme: "dark", recent: [], lastFolder: null, sessions: {}, sidebarWidth: 260, fontSize: 15 };
+const DEFAULTS: Persisted = { theme: "dark", recent: [], lastFolder: null, sessions: {}, sidebarWidth: 260, fontSize: 15, defaultLang: "cpp" };
 let saveTimer = 0;
 
 export const useApp = create<State>((set, get) => {
@@ -74,7 +76,7 @@ export const useApp = create<State>((set, get) => {
     clearTimeout(saveTimer);
     saveTimer = window.setTimeout(() => {
       const s = get();
-      const out: Persisted = { theme: s.theme, recent: s.recent, lastFolder: s.folder, sessions: s.sessions, sidebarWidth: s.sidebarWidth, fontSize: s.fontSize };
+      const out: Persisted = { theme: s.theme, recent: s.recent, lastFolder: s.folder, sessions: s.sessions, sidebarWidth: s.sidebarWidth, fontSize: s.fontSize, defaultLang: s.defaultLang };
       if (s.folder) out.sessions = { ...s.sessions, [s.folder]: { tabs: s.tabs.map((t) => t.path).filter((p) => !ws.isUntitled(p)), active: s.active && !ws.isUntitled(s.active) ? s.active : null } };
       api.saveSettings(JSON.stringify(out, null, 1)).catch(() => {});
     }, 500);
@@ -255,6 +257,10 @@ export const useApp = create<State>((set, get) => {
 
     toggleSidebar: () => set((s) => ({ sidebarVisible: !s.sidebarVisible })),
     setCursor: (line, col) => set({ cursor: { line, col } }),
+    setDefaultLang(defaultLang) {
+      set({ defaultLang });
+      persist();
+    },
     setSidebarWidth(w) {
       set({ sidebarWidth: Math.max(180, Math.min(600, w)) });
       persist();
