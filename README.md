@@ -73,7 +73,7 @@ NppDev is a desktop editor made for solving problems: open a file, type the inpu
 
 * **Run with one key.** <kbd>Ctrl</kbd>+<kbd>Enter</kbd> compiles (only when the code changed) and runs the file. The panel on the right has three boxes, like an online compiler: **Input**, **Output** and an optional **Expected output**.
 * **Judge verdicts.** Accepted, Wrong Answer (the differing lines are marked), Runtime Error (with the reason, e.g. a bad pointer or stack overflow), Time Limit Exceeded, Memory Limit Exceeded or the compiler's message, with the time and memory the program used. Time and memory limits are yours to set.
-* **SQL with a built-in database.** A new `.sql` file runs on NppDev's sample database (employees, departments, customers, orders, products, students and more) with nothing to install. Every run starts from a fresh copy, so `DELETE` and `DROP` are safe to try. Results print as tables, and the tables and their columns are listed next to your query.
+* **SQL with a built-in database.** A new `.sql` file runs on NppDev's sample database (employees, departments, customers, orders, products, students and more) with nothing to install. It works like a real database: what your queries change stays changed for the next run, and **Reset database** brings back the original data. Results print as tables; the tables and their columns are listed next to your query, and clicking one opens the whole database in a tab, with every row, column type and key.
 * **IntelliSense.** Completions, errors as you type, go to definition and rename, from clangd (C/C++), pylsp (Python) and jdtls (Java); JavaScript and TypeScript are built in.
 * **Command Palette and Quick Open.** <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> for any command, <kbd>Ctrl</kbd>+<kbd>P</kbd> for any file in the folder.
 * **Snippets** for competitive programming (`cp`, `fori`, `dsu`, `segtree`, `dijkstra`, ...), plus your own.
@@ -127,7 +127,7 @@ NppDev uses the compilers on your computer. **Settings > Languages** shows which
 
 Each file keeps its own Input and Expected output, so switching between problems is instant.
 
-**SQL:** create a file ending in `.sql` and press <kbd>Ctrl</kbd>+<kbd>Enter</kbd>. Instead of the Input box, the panel lists the sample database's tables and columns; click a table name to insert `SELECT * FROM` it. Table and column names also show up as you type (`employees.` lists its columns).
+**SQL:** create a file ending in `.sql` and press <kbd>Ctrl</kbd>+<kbd>Enter</kbd>. Instead of the Input box, the panel lists the sample database's tables and columns. Click a table name to open the **sample.db** tab (all rows, with each column's type, primary and foreign keys, and the `CREATE TABLE` statement under Structure), or **Insert** to add `SELECT * FROM` it to your file. The Command Palette has **SQL: Open Sample Database** too. Table and column names also show up as you type (`employees.` lists its columns).
 
 
 <p align="center">

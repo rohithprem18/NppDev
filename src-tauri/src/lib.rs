@@ -88,6 +88,7 @@ pub fn run() {
         .manage(StartupPaths(Mutex::new(first)))
         .setup(|app| {
             if let Some(w) = app.get_webview_window("main") { let _ = w.set_decorations(false); }
+            if let Ok(dir) = app.path().app_local_data_dir() { sql::init(dir); }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -113,6 +114,8 @@ pub fn run() {
             settings::user_snippets_path,
             runner::run_tests,
             sql::sql_schema,
+            sql::sql_table,
+            sql::sql_reset,
             runner::stop_run,
             runner::warm_up,
             tests::load_tests,

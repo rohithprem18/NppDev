@@ -542,7 +542,7 @@ struct Progress {
 }
 
 /// Compile (when needed) and run the tests one by one; each result is also sent as a "run-progress" event.
-/// A .sql file: run on the built-in SQLite with a fresh sample database; same verdicts as programs.
+/// A .sql file: run on the built-in SQLite and its sample database; same verdicts as programs.
 fn run_sql(path: &Path, req: &RunRequest) -> RunResult {
     let mut res = RunResult::default();
     res.compile.ok = true;

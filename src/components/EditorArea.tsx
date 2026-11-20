@@ -10,6 +10,8 @@ import { useRun, canRun } from "../run";
 import { Icon } from "./Icons";
 import { FileIcon } from "./FileIcon";
 import { Welcome } from "./Welcome";
+import { DatabaseView } from "./DatabaseView";
+import { isDbTab } from "../lib/sqlSchema";
 
 type EditorModule = typeof import("../lib/editor");
 
@@ -97,7 +99,7 @@ export function EditorArea() {
               className={"tab" + (t.path === active ? " active" : "") + (dirty[t.path] ? " dirty" : "")}
               onClick={() => activate(t.path)}
               onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); closeTab(t.path); } }}
-              title={ws.isUntitled(t.path) ? t.name : t.path}
+              title={isDbTab(t.path) ? "The sample database" : ws.isUntitled(t.path) ? t.name : t.path}
             >
               <FileIcon name={t.name} />
               <span className="tab-name">{t.name}</span>
@@ -114,7 +116,8 @@ export function EditorArea() {
         )}
         </div>
       )}
-      <div className="editor-host" ref={host} style={{ display: active ? "block" : "none" }} />
+      <div className="editor-host" ref={host} style={{ display: active && !isDbTab(active) ? "block" : "none" }} />
+      {isDbTab(active) && <DatabaseView />}
       {!active && <Welcome />}
     </div>
   );

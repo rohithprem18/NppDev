@@ -6,6 +6,7 @@ import { useApp } from "./store";
 import * as ws from "./lib/workspace";
 import { RUNNABLE, fileType } from "./lib/fileTypes";
 import { baseName } from "./lib/api";
+import { refreshDb } from "./lib/sqlSchema";
 
 export type Verdict = "AC" | "WA" | "RE" | "TLE" | "MLE" | "OK" | "STOPPED";
 
@@ -53,6 +54,8 @@ interface RunState {
   timeLimitMs: number;
   memoryLimitMb: number;
   running: boolean;
+  /** The run has taken long enough to say so (short runs swap the output in place, no flash). */
+  slow: boolean;
   compile: CompileResult | null;
   missing: string | null;
   error: string | null;
@@ -100,6 +103,7 @@ export const useRun = create<RunState>((set, get) => {
     timeLimitMs: DEFAULT_TL,
     memoryLimitMb: DEFAULT_ML,
     running: false,
+    slow: false,
     compile: null,
     missing: null,
     error: null,
@@ -133,22 +137,26 @@ export const useRun = create<RunState>((set, get) => {
         await app.saveAs(path);
         return app.notify("Saved. Press Ctrl+Enter again to run.");
       }
+      if (path.startsWith("db:")) return app.notify("Switch to a .sql file to run a query.");
       if (!canRun(path)) return app.notify("NppDev can run C, C++, Java, Python, JavaScript, Go, Rust, Kotlin, C# and SQL files.", "error");
       if (get().running) return;
       if (ws.isDirty(path)) await app.save(path);
       await get().load(path);
       const s = get();
-      set({ open: true, running: true, result: null, compile: null, missing: null, error: null });
+      set({ open: true, running: true });
+      const slowTimer = window.setTimeout(() => set({ slow: true }), 250);
       try {
         const res = await invoke<RunResult>("run_tests", {
           req: { path, tests: [{ input: s.input, expected: s.expected.trim() ? s.expected : null }], timeLimitMs: s.timeLimitMs, memoryLimitMb: s.memoryLimitMb, only: [] },
         });
         if (get().path !== path) return;
         set({ compile: res.compile, missing: res.missing ?? null, error: res.error ?? null, result: res.tests[0] ?? null });
+        if (/\.sql$/i.test(path)) refreshDb(); // the query may have changed the database
       } catch (e) {
-        set({ error: String(e) });
+        set({ error: String(e), result: null, compile: null, missing: null });
       } finally {
-        set({ running: false });
+        clearTimeout(slowTimer);
+        set({ running: false, slow: false });
       }
     },
 

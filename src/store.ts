@@ -6,6 +6,7 @@ import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialo
 import { api, baseName } from "./lib/api";
 import * as ws from "./lib/workspace";
 import { fileType } from "./lib/fileTypes";
+import { DB_TAB, DB_TAB_NAME, isDbTab, useDbView } from "./lib/sqlSchema";
 // IntelliSense and snippets need Monaco: loaded on first use, not at startup
 const lsp = () => import("./lib/lsp");
 const snippets = () => import("./lib/snippets");
@@ -65,6 +66,8 @@ interface State extends Persisted {
   closeFolder(): Promise<void>;
   openFile(path: string): Promise<void>;
   newFile(): Promise<void>;
+  /** Open the sample database in its own tab, showing this table. */
+  openDatabase(table?: string): void;
   activate(path: string): void;
   closeTab(path: string): Promise<boolean>;
   save(path?: string, quiet?: boolean): Promise<void>;
@@ -88,6 +91,8 @@ interface State extends Persisted {
 
 const DEFAULTS: Persisted = { theme: "dark", recent: [], lastFolder: null, sessions: {}, sidebarWidth: 260, fontSize: 15, defaultLang: "cpp", skippedVersion: null, editorFont: "Hack", autoSave: true };
 let saveTimer = 0;
+/** Tabs that are files on disk (not Untitled, not the database tab): the ones a folder reopens. */
+const onDisk = (p: string) => !ws.isUntitled(p) && !isDbTab(p);
 
 export const useApp = create<State>((set, get) => {
   /** Settings are written half a second after the last change. */
@@ -96,7 +101,7 @@ export const useApp = create<State>((set, get) => {
     saveTimer = window.setTimeout(() => {
       const s = get();
       const out: Persisted = { theme: s.theme, recent: s.recent, lastFolder: s.folder, sessions: s.sessions, sidebarWidth: s.sidebarWidth, fontSize: s.fontSize, defaultLang: s.defaultLang, skippedVersion: s.skippedVersion, editorFont: s.editorFont, autoSave: s.autoSave };
-      if (s.folder) out.sessions = { ...s.sessions, [s.folder]: { tabs: s.tabs.map((t) => t.path).filter((p) => !ws.isUntitled(p)), active: s.active && !ws.isUntitled(s.active) ? s.active : null } };
+      if (s.folder) out.sessions = { ...s.sessions, [s.folder]: { tabs: s.tabs.map((t) => t.path).filter(onDisk), active: s.active && onDisk(s.active) ? s.active : null } };
       api.saveSettings(JSON.stringify(out, null, 1)).catch(() => {});
     }, 500);
   };
@@ -106,7 +111,7 @@ export const useApp = create<State>((set, get) => {
   const rememberSession = () => {
     const s = get();
     if (!s.folder) return;
-    set({ sessions: { ...s.sessions, [s.folder]: { tabs: s.tabs.map((t) => t.path).filter((p) => !ws.isUntitled(p)), active: s.active } } });
+    set({ sessions: { ...s.sessions, [s.folder]: { tabs: s.tabs.map((t) => t.path).filter(onDisk), active: s.active && onDisk(s.active) ? s.active : null } } });
   };
 
   return {
@@ -211,6 +216,13 @@ export const useApp = create<State>((set, get) => {
       set((s) => ({ tabs: [...s.tabs, { path, name: path.slice("untitled:".length) }], active: path }));
     },
 
+    openDatabase(table) {
+      const prev = get().active;
+      useDbView.setState((v) => ({ table: table ?? v.table, from: prev && /\.sql$/i.test(prev) ? prev : v.from }));
+      if (!get().tabs.some((t) => t.path === DB_TAB)) set((s) => ({ tabs: [...s.tabs, { path: DB_TAB, name: DB_TAB_NAME }] }));
+      get().activate(DB_TAB);
+    },
+
     activate(path) {
       const prev = get().active;
       if (get().autoSave && prev && prev !== path && !ws.isUntitled(prev) && ws.isDirty(prev)) get().save(prev, true);
@@ -247,7 +259,7 @@ export const useApp = create<State>((set, get) => {
 
     async save(path, quiet) {
       path = path ?? get().active ?? undefined;
-      if (!path) return;
+      if (!path || isDbTab(path)) return;
       if (ws.isUntitled(path)) return quiet ? undefined : get().saveAs(path);
       try { await ws.saveDoc(path); } catch (e) { get().notify(String(e), "error"); return; }
       const sn = await snippets();
@@ -259,7 +271,7 @@ export const useApp = create<State>((set, get) => {
 
     async saveAs(path) {
       path = path ?? get().active ?? undefined;
-      if (!path) return;
+      if (!path || isDbTab(path)) return;
       const target = await saveDialog({ title: "Save As", defaultPath: get().folder ?? undefined });
       if (!target) return;
       try {

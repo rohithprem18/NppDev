@@ -12,6 +12,7 @@ import { Palette, usePalette } from "./components/Palette";
 import { TitleBar } from "./components/TitleBar";
 import { checkForUpdate } from "./lib/update";
 import { useRun } from "./run";
+import { isDbTab, DB_TAB_NAME } from "./lib/sqlSchema";
 import { ActivityBar, StatusBar, ConfirmDialog, Toast } from "./components/Chrome";
 
 export default function App() {
@@ -27,7 +28,7 @@ export default function App() {
 
   // window title: "file.cpp ● - folder - NppDev"
   useEffect(() => {
-    const parts = [active ? baseName(active.replace(/^untitled:/, "")) + (dirty[active] ? " ●" : "") : null, folder ? baseName(folder) : null, "NppDev"];
+    const parts = [isDbTab(active) ? DB_TAB_NAME : active ? baseName(active.replace(/^untitled:/, "")) + (dirty[active] ? " ●" : "") : null, folder ? baseName(folder) : null, "NppDev"];
     getCurrentWindow().setTitle(parts.filter(Boolean).join(" - ")).catch(() => {});
   }, [active, folder, dirty]);
 
@@ -112,7 +113,7 @@ export default function App() {
           </>
         )}
         <main className="main"><EditorArea /></main>
-        {runOpen && (
+        {runOpen && !isDbTab(active) && (
           <>
             <div className="sash" onMouseDown={() => { dragging.current = "run"; document.body.classList.add("resizing"); }} />
             <RunPanel />

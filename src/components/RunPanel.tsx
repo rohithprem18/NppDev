@@ -2,7 +2,7 @@
 // output. The text boxes keep their own text while you type (the app only listens), so the
 // cursor never jumps.
 import { memo, useEffect, useState } from "react";
-import { sqlSchema, type SqlTable } from "../lib/sqlSchema";
+import { sqlSchema, schemaLoaded, insertSql, useDbView, type SqlTable } from "../lib/sqlSchema";
 import { useRun, canRun, TOOL_NAMES, type Verdict } from "../run";
 import { useApp } from "../store";
 import { Icon } from "./Icons";
@@ -36,23 +36,23 @@ const TextPane = memo(function TextPane({ value, version, onText, placeholder }:
   );
 });
 
-/** The built-in sample database: tables, columns, row counts. Clicking a table puts a query for it
- * at the cursor. */
+/** The built-in sample database: tables, columns, row counts. A table's name opens it in the
+ * sample.db tab (all rows, types, keys); "Insert" puts a query for it into the editor. */
 function SampleDatabase() {
-  const [tables, setTables] = useState<SqlTable[]>([]);
-  useEffect(() => { sqlSchema().then(setTables); }, []);
-  const insert = (t: SqlTable) => {
-    const ed = (window as unknown as { nppdevEditor?: { focus(): void; trigger(s: string, h: string, p: unknown): void } }).nppdevEditor;
-    if (!ed) return;
-    ed.focus();
-    ed.trigger("sample-db", "type", { text: `SELECT * FROM ${t.name};` });
-  };
+  // drawn from the cache on the first frame, so switching to a .sql file never shows an empty list
+  const [tables, setTables] = useState<SqlTable[]>(() => schemaLoaded() ?? []);
+  const version = useDbView((s) => s.version); // reloads after each run: row counts, new tables
+  useEffect(() => { sqlSchema().then(setTables); }, [version]);
+  const openDatabase = useApp.getState().openDatabase;
   return (
     <div className="pane-body sample-db">
       {tables.map((t) => (
         <div key={t.name} className="db-table">
-          <button className="db-name" title={`Insert SELECT * FROM ${t.name};`} onClick={() => insert(t)}>{t.name}</button>
-          <span className="db-rows">{t.rows} rows</span>
+          <div className="db-line">
+            <button className="db-name" title={`Open ${t.name}: every row, column types and keys`} onClick={() => openDatabase(t.name)}>{t.name}</button>
+            <span className="db-rows">{t.rows} rows</span>
+            <button className="db-insert" title={`Insert SELECT * FROM ${t.name}; into the editor`} onClick={() => insertSql(`SELECT * FROM ${t.name};`)}>Insert</button>
+          </div>
           <div className="db-cols">{t.columns.join(", ")}</div>
         </div>
       ))}
@@ -62,12 +62,12 @@ function SampleDatabase() {
 
 function OutputPane() {
   const r = useRun((s) => s.result);
-  const running = useRun((s) => s.running);
+  const slow = useRun((s) => s.slow);
   const c = useRun((s) => s.compile);
   const missing = useRun((s) => s.missing);
   const error = useRun((s) => s.error);
   const expected = useRun((s) => s.expected);
-  if (running) return <div className="pane-body muted">Running…</div>;
+  if (slow) return <div className="pane-body muted">Running…</div>;
   if (missing) return <div className="pane-body">NppDev needs {TOOL_NAMES[missing] ?? missing} to run this file. Install it, then run again.</div>;
   if (error) return <div className="pane-body bad">{error}</div>;
   if (c && !c.ok) return <pre className="pane-body pane-pre bad">{c.output || "The compiler failed without a message."}</pre>;
@@ -90,7 +90,7 @@ function OutputPane() {
 
 function OutputHead() {
   const r = useRun((s) => s.result);
-  const running = useRun((s) => s.running);
+  const running = useRun((s) => s.slow);
   const label = r && !running ? VERDICT_TEXT[r.verdict] : undefined;
   return (
     <div className="pane-head">
@@ -130,7 +130,7 @@ export function RunPanel() {
 
       {/\.sql$/i.test(active) ? (
         <section className="pane input">
-          <div className="pane-head"><span>Sample database</span><span className="pane-meta">fresh copy every run</span></div>
+          <div className="pane-head"><span>Sample database</span><span className="pane-meta">changes are kept</span><button className="pane-link" title="Open the whole database in a tab" onClick={() => useApp.getState().openDatabase()}>Open</button></div>
           <SampleDatabase />
         </section>
       ) : (

@@ -1,5 +1,5 @@
--- NppDev's sample database. Every run of a .sql file starts from a fresh copy of it, so your
--- INSERT / UPDATE / DELETE / DROP statements never change it for the next run.
+-- NppDev's sample database. It is created from this file the first time a .sql file runs; after
+-- that, what your queries change stays changed. Reset (in the sample.db tab) recreates it from here.
 
 -- ---------------------------------------------------------------- a small company
 CREATE TABLE departments (

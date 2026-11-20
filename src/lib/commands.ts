@@ -26,6 +26,7 @@ export function allCommands(): Command[] {
     { id: "run", label: "Run", keys: "Ctrl+Enter", run: () => useRun.getState().run() },
     { id: "run.stop", label: "Run: Stop", run: () => useRun.getState().stop() },
     { id: "run.panel", label: "Run: Show / Hide Input and Output", keys: "Ctrl+Shift+B", run: () => useRun.getState().toggle() },
+    { id: "sql.database", label: "SQL: Open Sample Database", run: () => app().openDatabase() },
     { id: "file.new", label: "File: New File", keys: "Ctrl+N", run: () => app().newFile() },
     { id: "file.openFolder", label: "File: Open Folder…", keys: "Ctrl+Shift+O", run: () => app().openFolder() },
     { id: "file.closeFolder", label: "File: Close Folder", run: () => app().closeFolder() },

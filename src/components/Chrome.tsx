@@ -6,6 +6,7 @@ import { usePalette } from "./Palette";
 import { baseName } from "../lib/api";
 import { fileType, LANGUAGE_NAMES } from "../lib/fileTypes";
 import { Icon } from "./Icons";
+import { isDbTab } from "../lib/sqlSchema";
 
 export function ActivityBar() {
   const sidebarVisible = useApp((s) => s.sidebarVisible);
@@ -27,13 +28,14 @@ export function StatusBar() {
   const tabs = useApp((s) => s.tabs);
   const cursor = useCursor();
   const tab = tabs.find((t) => t.path === active);
-  const lang = tab ? LANGUAGE_NAMES[fileType(tab.name).lang] ?? "Plain Text" : null;
+  const db = isDbTab(active);
+  const lang = db ? "SQLite" : tab ? LANGUAGE_NAMES[fileType(tab.name).lang] ?? "Plain Text" : null;
   return (
     <footer className="status-bar">
       <span className="status-item">{folder ? baseName(folder) : "No folder"}</span>
       <div className="grow" />
-      {tab && <span className="status-item">Ln {cursor.line}, Col {cursor.col}</span>}
-      {tab && <span className="status-item">UTF-8</span>}
+      {tab && !db && <span className="status-item">Ln {cursor.line}, Col {cursor.col}</span>}
+      {tab && !db && <span className="status-item">UTF-8</span>}
       {lang && <span className="status-item">{lang}</span>}
     </footer>
   );

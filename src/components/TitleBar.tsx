@@ -1,6 +1,7 @@
 // NppDev's own title bar (the Windows one is turned off): logo, the open file and folder, a search
 // box that opens Quick Open, and minimise / maximise / close. Drag it to move the window;
 // double-click it to maximise.
+import { isDbTab, DB_TAB_NAME } from "../lib/sqlSchema";
 import { useEffect, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useApp } from "../store";
@@ -21,7 +22,7 @@ export function TitleBar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const file = active ? baseName(active.replace(/^untitled:/, "")) : null;
+  const file = isDbTab(active) ? DB_TAB_NAME : active ? baseName(active.replace(/^untitled:/, "")) : null;
 
   return (
     <header className="titlebar" data-tauri-drag-region onDoubleClick={(e) => { if (e.target === e.currentTarget) win.toggleMaximize(); }}>

@@ -6,7 +6,7 @@ import { useApp } from "../store";
 import { Icon } from "./Icons";
 import { FileIcon, FolderIcon } from "./FileIcon";
 
-const SQL_STARTER = `-- Runs on NppDev's sample database (a fresh copy every run): its tables are listed on the right.
+const SQL_STARTER = `-- Runs on NppDev's sample database: its tables are listed on the right (click one to see all of it).
 -- Press Ctrl+Enter to run.
 SELECT name, job_title, salary
 FROM employees
