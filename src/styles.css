@@ -155,3 +155,67 @@ kbd { font: 11px/1 Hack, Consolas, monospace; color: var(--muted); padding: 3px 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: #8881; border-radius: 8px; }
 :hover::-webkit-scrollbar-thumb { background: #8883; }
+
+/* ---------- run button on the tab bar ---------- */
+.tab-bar { display: flex; height: 36px; background: var(--bg-raised); border-bottom: 1px solid var(--border); flex: none; }
+.tab-bar .tabs { flex: 1; border-bottom: 0; }
+.tab-run { display: flex; align-items: center; gap: 6px; margin: 5px 8px; padding: 0 12px; border-radius: 6px; color: #fff; background: var(--accent-2); font-weight: 600; font-size: 12px; flex: none; }
+.tab-run:hover { filter: brightness(1.1); }
+.tab-run.stop { background: var(--danger); }
+
+/* ---------- run panel ---------- */
+.run-panel { display: flex; flex-direction: column; min-width: 300px; background: var(--bg-panel); border-left: 1px solid var(--border); }
+.run-panel .side-header { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.run-toolbar { display: flex; align-items: center; gap: 8px; padding: 0 12px 10px; }
+.run-btn { display: flex; align-items: center; gap: 7px; font-weight: 600; }
+.run-btn kbd { background: #fff2; border-color: #fff3; color: #fffc; }
+.limits { margin-left: auto; display: flex; gap: 6px; }
+.limits label { display: flex; align-items: center; gap: 3px; color: var(--muted); font-size: 12px; }
+.limits input { width: 58px; height: 26px; padding: 0 4px; font: 12px Hack, Consolas, monospace; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 5px; text-align: right; }
+.limits input:focus { outline: none; border-color: var(--accent); }
+.problem { margin: 0 12px 8px; padding: 8px 10px; border-radius: 6px; background: var(--bg-raised); border: 1px solid var(--border); }
+.problem-name { color: var(--text-strong); font-weight: 600; }
+.run-summary { display: flex; align-items: center; gap: 8px; margin: 0 12px 8px; padding: 8px 10px; border-radius: 6px; font-weight: 600; background: var(--bg-raised); }
+.run-summary.pass { color: var(--accent-2); background: color-mix(in srgb, var(--accent-2) 14%, transparent); }
+.run-summary.fail { color: var(--danger); background: color-mix(in srgb, var(--danger) 13%, transparent); }
+.run-summary.busy { color: var(--muted); font-weight: 400; }
+.run-list { flex: 1; overflow: auto; padding: 0 12px 24px; }
+.run-alert { padding: 10px 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--danger); background: color-mix(in srgb, var(--danger) 8%, transparent); }
+.run-alert p { margin: 4px 0 0; color: var(--muted); }
+.compile-error { margin-bottom: 10px; }
+.compile-ok { color: var(--muted); font-size: 12px; margin: 0 0 8px 2px; }
+.run-empty { padding: 32px 24px; color: var(--muted); text-align: center; }
+.run-empty-icon { width: 56px; height: 56px; margin: 0 auto 12px; border-radius: 14px; display: grid; place-items: center; background: var(--bg-raised); color: var(--accent-2); }
+
+.test-card { border: 1px solid var(--border); border-left: 3px solid var(--border); border-radius: 8px; padding: 8px 10px 10px; margin-bottom: 10px; background: var(--bg); }
+.test-card.v-AC { border-left-color: var(--accent-2); }
+.test-card.v-WA, .test-card.v-RE, .test-card.v-TLE, .test-card.v-MLE { border-left-color: var(--danger); }
+.test-card.v-OK { border-left-color: var(--accent); }
+.test-card.pending { border-left-color: var(--muted); }
+.test-card header { display: flex; align-items: center; gap: 8px; height: 26px; }
+.test-title { font-weight: 600; color: var(--text-strong); }
+.stats { color: var(--muted); font: 11px Hack, Consolas, monospace; }
+.badge { display: inline-flex; align-items: center; gap: 5px; padding: 1px 7px; border-radius: 10px; font: 700 11px/16px "Segoe UI", system-ui, sans-serif; letter-spacing: .03em; }
+.badge.v-AC { background: color-mix(in srgb, var(--accent-2) 20%, transparent); color: var(--accent-2); }
+.badge.v-WA, .badge.v-RE, .badge.v-TLE, .badge.v-MLE { background: color-mix(in srgb, var(--danger) 18%, transparent); color: var(--danger); }
+.badge.v-OK { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
+.badge.v-STOPPED, .badge.running { background: var(--bg-hover); color: var(--muted); }
+.icon-btn { width: 24px; height: 24px; border-radius: 5px; display: grid; place-items: center; color: var(--muted); }
+.icon-btn:hover:not(:disabled) { background: var(--bg-hover); color: var(--text-strong); }
+.icon-btn:disabled { opacity: .4; cursor: default; }
+.test-message { margin: 4px 0; padding: 6px 8px; border-radius: 5px; font-size: 12px; background: var(--bg-raised); color: var(--muted); user-select: text; }
+.test-message.error { color: var(--danger); }
+.field { display: block; margin-top: 6px; }
+.field-label { display: flex; gap: 8px; align-items: baseline; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+.hint-wa { text-transform: none; font-weight: 400; letter-spacing: 0; color: var(--danger); }
+.field textarea, .output { display: block; width: 100%; margin: 0; padding: 6px 8px; font: 13px/19px Hack, Consolas, monospace; color: var(--text); background: var(--bg-raised); border: 1px solid var(--border); border-radius: 6px; resize: vertical; tab-size: 4; user-select: text; }
+.field textarea:focus { outline: none; border-color: var(--accent); }
+.field textarea::placeholder { color: var(--muted); opacity: .7; font-family: "Segoe UI", system-ui, sans-serif; }
+.output { max-height: 320px; overflow: auto; white-space: pre; resize: none; }
+.output .diff { background: color-mix(in srgb, var(--danger) 18%, transparent); }
+.output .diff.missing { color: var(--danger); font-style: italic; background: none; }
+.output.stderr { color: var(--danger); white-space: pre-wrap; }
+.add-test { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 9px; border: 1px dashed var(--border); border-radius: 8px; color: var(--muted); }
+.add-test:hover { color: var(--accent); border-color: var(--accent); }
+.spinner { width: 11px; height: 11px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

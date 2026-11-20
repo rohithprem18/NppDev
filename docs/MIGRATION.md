@@ -46,9 +46,9 @@ OS                         Windows: WebView2 · Ubuntu: WebKitGTK
 
 ## Milestones
 
-- [ ] **M1 — shell**: Tauri app runs; Monaco editor; open folder; Explorer (new file/folder, rename,
+- [x] **M1 — shell**: Tauri app runs; Monaco editor; open folder; Explorer (new file/folder, rename,
       delete); tabs; save; Dark/Light; Welcome page; recent folders; window state.
-- [ ] **M2 — run & judge**: Run panel; C, C++, Java, Python, JavaScript (+ Go, Rust, Kotlin, C#);
+- [x] **M2 — run & judge**: Run panel; C, C++, Java, Python, JavaScript (+ Go, Rust, Kotlin, C#);
       multiple test cases per file; Accepted / Wrong answer (diff) / Runtime error / TLE / MLE / CE;
       time & memory limits; compile cache; C++ PCH.
 - [ ] **M3 — editing**: LSP IntelliSense (clangd, jdtls, pylsp, TypeScript); built-in + user snippets;
@@ -63,3 +63,11 @@ OS                         Windows: WebView2 · Ubuntu: WebKitGTK
 ## Progress log
 
 (newest last)
+
+- 2026-11-20 — M1 done: Tauri 2 + React + Monaco shell, Explorer, tabs, sessions, themes, Welcome.
+- 2026-11-20 — M2 done: src-tauri/src/runner.rs (compile cache, C++17/20 auto, bits/stdc++.h PCH warm-up,
+  Windows job object: kill tree on TLE, memory cap + MLE via completion port, peak working set;
+  Linux rlimit + wait4), tools.rs (compiler discovery), tests.rs (tests per file in app data, FNV key),
+  Run panel (src/run.ts, RunPanel.tsx; Ctrl+Enter, per-test run, diff on WA, limits).
+  `cargo test --lib` judges C++/Java/Python/JS/Rust/C# programs for AC/WA/RE/TLE/MLE/CE.
+  Not tested here: Go, Kotlin (not installed on this PC); Linux paths (needs Ubuntu CI).

@@ -5,6 +5,7 @@
 //   next()         the next line ("" after the last one)
 //   nextInt()      the next line as a number          nextInts()  the next line as an array of numbers
 //   nextWords()    the next line split on spaces
+//   readline()     same as next() and print(...) same as console.log, as on Codeforces / AtCoder V8
 //
 // A program that declares its own `input`, `next`, ... (or reads stdin itself) is not affected.
 "use strict";
@@ -23,6 +24,8 @@ const helpers = {
     nextInt: () => Number(helpers.next().trim()),
     nextInts: () => helpers.next().trim().split(/\s+/).filter(Boolean).map(Number),
     nextWords: () => helpers.next().trim().split(/\s+/).filter(Boolean),
+    readline: () => helpers.next(),
+    print: (...a) => console.log(...a),
 };
 Object.defineProperty(globalThis, "input", { get: all, configurable: true, enumerable: false });
 for (const [name, fn] of Object.entries(helpers)) {

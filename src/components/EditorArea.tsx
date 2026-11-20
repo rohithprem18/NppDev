@@ -4,11 +4,13 @@ import { monaco, EDITOR_OPTIONS } from "../lib/editor";
 import * as ws from "../lib/workspace";
 import { fileType } from "../lib/fileTypes";
 import { useApp } from "../store";
+import { useRun, canRun } from "../run";
 import { Icon } from "./Icons";
 import { Welcome } from "./Welcome";
 
 export function EditorArea() {
   const { tabs, active, dirty, theme, fontSize, activate, closeTab, setCursor } = useApp();
+  const { running, run, stop } = useRun();
   const host = useRef<HTMLDivElement>(null);
   const editor = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const shown = useRef<string | null>(null);
@@ -22,6 +24,7 @@ export function EditorArea() {
     // Ctrl+S inside the editor (Monaco takes the key before the window sees it)
     ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => useApp.getState().save());
     ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyS, () => useApp.getState().saveAs());
+    ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => useRun.getState().run());
     (window as unknown as { nppdevEditor: unknown }).nppdevEditor = ed;
     return () => ed.dispose();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -48,6 +51,7 @@ export function EditorArea() {
   return (
     <div className="editor-area">
       {tabs.length > 0 && (
+        <div className="tab-bar">
         <div className="tabs" onWheel={(e) => { e.currentTarget.scrollLeft += e.deltaY; }}>
           {tabs.map((t) => {
             const ft = fileType(t.name);
@@ -68,6 +72,12 @@ export function EditorArea() {
               </div>
             );
           })}
+        </div>
+        {canRun(active) && (
+          running
+            ? <button className="tab-run stop" title="Stop" onClick={stop}>{Icon.stop(12)}<span>Stop</span></button>
+            : <button className="tab-run" title="Run (Ctrl+Enter)" onClick={() => run()}>{Icon.run(12)}<span>Run</span></button>
+        )}
         </div>
       )}
       <div className="editor-host" ref={host} style={{ display: active ? "block" : "none" }} />

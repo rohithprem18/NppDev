@@ -1,5 +1,8 @@
 mod fs;
+mod runner;
 mod settings;
+mod tests;
+mod tools;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -18,6 +21,12 @@ pub fn run() {
             fs::reveal,
             settings::load_settings,
             settings::save_settings,
+            runner::run_tests,
+            runner::stop_run,
+            runner::warm_up,
+            tests::load_tests,
+            tests::save_tests,
+            tools::list_tools,
         ])
         .run(tauri::generate_context!())
         .expect("error while running NppDev");
