@@ -29,7 +29,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis", "deb", "appimage"],
+    "targets": ["deb", "appimage"],
     "publisher": "Rohith Prem",
     "copyright": "Copyright (C) Rohith Prem. GPL-3.0.",
     "category": "DeveloperTool",
@@ -46,8 +46,7 @@
     "windows": {
       "nsis": {
         "installMode": "currentUser",
-        "displayLanguageSelector": false,
-        "installerHooks": "./windows/hooks.nsh"
+        "displayLanguageSelector": false
       }
     },
     "linux": {

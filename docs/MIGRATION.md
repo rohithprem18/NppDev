@@ -58,7 +58,7 @@ OS                         Windows: WebView2 · Ubuntu: WebKitGTK
       CodeChef, GeeksforGeeks, LeetCode; creates the file + test cases.
 - [ ] **M5 — tools & extras**: tools detection + one-click installer; integrated terminal; Git panel;
       stress testing; settings export/import.
-- [ ] **M6 — ship**: Windows NSIS setup + Ubuntu .deb/.AppImage; update check; install.ps1 / install.sh;
+- [ ] **M6 — ship**: Windows = plain NppDev.exe installed by install.ps1 (no setup program) + Ubuntu .deb/.AppImage; update check; install.ps1 / install.sh;
       remove the old Notepad++ files; README; release NppDev v2.0.0.
 
 ## Progress log
@@ -87,3 +87,10 @@ OS                         Windows: WebView2 · Ubuntu: WebKitGTK
   Command Palette (Ctrl+Shift+P / F1) and Quick Open (Ctrl+P) in src/components/Palette.tsx; built-in
   CP snippets + user snippets.json (Preferences: Edit My Snippets). Font zoom Ctrl+= / Ctrl+- / Ctrl+0.
   Not yet verified by hand: pylsp, jdtls (needs jdtls in app data tools/, M5 installs it), snippets UI.
+- 2026-11-20 — Windows install decided: no setup program. Release asset is NppDev.exe; install.ps1
+  (irm | iex) verifies it, installs to %LOCALAPPDATA%\Programs\NppDev, adds Start menu, "Open with
+  NppDev" (files, folders, folder background) and the Open-with list for code files, a Settings > Apps
+  uninstall entry (uninstall.ps1), and removes an old 1.x NppDev in that folder first.
+  The app takes files/folders on its command line and keeps one window (tauri-plugin-single-instance).
+  Installed on the owner's laptop from a local build (NPPDEV_EXE) and checked. Taskbar pinning can't be
+  scripted on Windows 11; the owner pins it by hand. Notepad++ uninstall: UAC prompt was cancelled.
