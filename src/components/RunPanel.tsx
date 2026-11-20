@@ -80,7 +80,7 @@ export function RunPanel() {
   const active = useApp((s) => s.active);
   const width = useRun((s) => s.width);
   const version = useRun((s) => s.version);
-  const running = useRun((s) => s.running);
+  const running = useRun((s) => s.running); // the Run / Stop button is on the tab bar
   const tl = useRun((s) => s.timeLimitMs);
   const ml = useRun((s) => s.memoryLimitMb);
   const st = useRun.getState(); // input/expected are read here only when `version` changes
@@ -97,9 +97,7 @@ export function RunPanel() {
   return (
     <aside className="run-panel" style={{ width }}>
       <div className="panel-head">
-        {running
-          ? <button className="btn danger run-btn" onClick={st.stop}>{Icon.stop(12)} Stop</button>
-          : <button className="btn primary run-btn" onClick={() => st.run()} title="Run (Ctrl+Enter)">{Icon.run(12)} Run</button>}
+        <span className="panel-title">{running ? "Running…" : "Run"}</span>
         <div className="grow" />
         <label className="limit" title="Time limit"><input type="number" min={100} step={500} value={tl} onChange={(e) => st.setLimits(+e.target.value, ml)} /> ms</label>
         <label className="limit" title="Memory limit"><input type="number" min={16} step={64} value={ml} onChange={(e) => st.setLimits(tl, +e.target.value)} /> MB</label>

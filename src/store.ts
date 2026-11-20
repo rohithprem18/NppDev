@@ -29,6 +29,8 @@ interface Persisted {
   sidebarWidth: number;
   fontSize: number;
   defaultLang: string;
+  /** A release the user chose to skip in the update box. */
+  skippedVersion: string | null;
 }
 
 export interface Confirm {
@@ -71,9 +73,10 @@ interface State extends Persisted {
   setSidebarWidth(w: number): void;
   setDefaultLang(id: string): void;
   setFontSize(size: number): void;
+  setSkippedVersion(v: string | null): void;
 }
 
-const DEFAULTS: Persisted = { theme: "dark", recent: [], lastFolder: null, sessions: {}, sidebarWidth: 260, fontSize: 15, defaultLang: "cpp" };
+const DEFAULTS: Persisted = { theme: "dark", recent: [], lastFolder: null, sessions: {}, sidebarWidth: 260, fontSize: 15, defaultLang: "cpp", skippedVersion: null };
 let saveTimer = 0;
 
 export const useApp = create<State>((set, get) => {
@@ -82,7 +85,7 @@ export const useApp = create<State>((set, get) => {
     clearTimeout(saveTimer);
     saveTimer = window.setTimeout(() => {
       const s = get();
-      const out: Persisted = { theme: s.theme, recent: s.recent, lastFolder: s.folder, sessions: s.sessions, sidebarWidth: s.sidebarWidth, fontSize: s.fontSize, defaultLang: s.defaultLang };
+      const out: Persisted = { theme: s.theme, recent: s.recent, lastFolder: s.folder, sessions: s.sessions, sidebarWidth: s.sidebarWidth, fontSize: s.fontSize, defaultLang: s.defaultLang, skippedVersion: s.skippedVersion };
       if (s.folder) out.sessions = { ...s.sessions, [s.folder]: { tabs: s.tabs.map((t) => t.path).filter((p) => !ws.isUntitled(p)), active: s.active && !ws.isUntitled(s.active) ? s.active : null } };
       api.saveSettings(JSON.stringify(out, null, 1)).catch(() => {});
     }, 500);
@@ -283,6 +286,10 @@ export const useApp = create<State>((set, get) => {
     },
 
     toggleSidebar: () => set((s) => ({ sidebarVisible: !s.sidebarVisible })),
+    setSkippedVersion(skippedVersion) {
+      set({ skippedVersion });
+      persist();
+    },
     setFontSize(size) {
       set({ fontSize: Math.max(9, Math.min(32, Math.round(size))) });
       persist();

@@ -3,6 +3,7 @@ import { useApp } from "../store";
 import { useRun } from "../run";
 import type { monaco } from "./editor";
 import { openUserSnippets } from "./snippets";
+import { checkForUpdate } from "./update";
 
 export interface Command {
   id: string;
@@ -38,6 +39,7 @@ export function allCommands(): Command[] {
     { id: "view.zoomIn", label: "View: Bigger Font", keys: "Ctrl+=", run: () => app().setFontSize(app().fontSize + 1) },
     { id: "view.zoomOut", label: "View: Smaller Font", keys: "Ctrl+-", run: () => app().setFontSize(app().fontSize - 1) },
     { id: "view.zoomReset", label: "View: Reset Font Size", keys: "Ctrl+0", run: () => app().setFontSize(15) },
+    { id: "update", label: "Check for Updates", run: () => checkForUpdate(true) },
     { id: "snippets.edit", label: "Preferences: Edit My Snippets", run: () => openUserSnippets() },
     { id: "go.line", label: "Go to Line…", keys: "Ctrl+G", run: action("editor.action.gotoLine") },
     { id: "go.def", label: "Go to Definition", keys: "F12", run: action("editor.action.revealDefinition") },

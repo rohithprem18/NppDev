@@ -9,6 +9,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { RunPanel } from "./components/RunPanel";
 import { Palette, usePalette } from "./components/Palette";
 import { TitleBar } from "./components/TitleBar";
+import { checkForUpdate } from "./lib/update";
 import { useRun } from "./run";
 import { ActivityBar, StatusBar, ConfirmDialog, Toast } from "./components/Chrome";
 
@@ -18,6 +19,8 @@ export default function App() {
   const dragging = useRef<"side" | "run" | null>(null);
 
   useEffect(() => { init(); }, [init]);
+  // a few seconds after start: is there a newer NppDev on GitHub?
+  useEffect(() => { const t = setTimeout(() => checkForUpdate(), 4000); return () => clearTimeout(t); }, []);
   // prepare the precompiled C++ header in the background so the first run is fast
   useEffect(() => { const t = setTimeout(() => invoke("warm_up").catch(() => {}), 1500); return () => clearTimeout(t); }, []);
 

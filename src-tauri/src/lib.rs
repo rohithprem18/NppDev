@@ -21,6 +21,28 @@ fn paths_from_args(args: &[String], cwd: &Path) -> Vec<String> {
         .collect()
 }
 
+/// "Update now": Windows runs the one-line installer in its own window (it waits for NppDev to
+/// close, installs the verified new version and opens it); elsewhere the release page opens.
+#[tauri::command]
+fn start_update(url: String) -> Result<(), String> {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        let _ = url;
+        std::process::Command::new("powershell.exe")
+            .args(["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
+                "irm https://raw.githubusercontent.com/rohithprem18/NppDev/main/install.ps1 | iex; Start-Sleep 3"])
+            .creation_flags(0x0000_0010) // CREATE_NEW_CONSOLE: the user sees the progress
+            .spawn()
+            .map(|_| ())
+            .map_err(|e| e.to_string())
+    }
+    #[cfg(not(windows))]
+    {
+        std::process::Command::new("xdg-open").arg(&url).spawn().map(|_| ()).map_err(|e| e.to_string())
+    }
+}
+
 /// What this first window was asked to open; the UI takes it once at startup.
 struct StartupPaths(Mutex<Vec<String>>);
 
@@ -57,6 +79,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             startup_paths,
+            start_update,
             fs::list_dir,
             fs::list_files,
             lsp::lsp_start,

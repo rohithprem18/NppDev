@@ -33,7 +33,11 @@ export function EditorArea() {
     ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyS, () => useApp.getState().saveAs());
     ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => useRun.getState().run());
     (window as unknown as { nppdevEditor: unknown }).nppdevEditor = ed;
-    return () => ed.dispose();
+    // measure again once every font is in, so the caret lines up with the letters exactly
+    const remeasure = () => monaco.editor.remeasureFonts();
+    document.fonts.ready.then(remeasure);
+    document.fonts.addEventListener("loadingdone", remeasure);
+    return () => { document.fonts.removeEventListener("loadingdone", remeasure); ed.dispose(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
