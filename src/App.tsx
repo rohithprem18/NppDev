@@ -9,6 +9,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { RunPanel } from "./components/RunPanel";
 import { ImportDialog } from "./components/ImportDialog";
 import { Palette, usePalette } from "./components/Palette";
+import { TitleBar } from "./components/TitleBar";
 import { useImport } from "./import";
 import { useRun } from "./run";
 import { ActivityBar, StatusBar, ConfirmDialog, Toast } from "./components/Chrome";
@@ -98,6 +99,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <TitleBar />
       <div className="workbench">
         <ActivityBar />
         {sidebarVisible && (

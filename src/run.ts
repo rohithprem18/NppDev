@@ -187,7 +187,7 @@ export const useRun = create<RunState>((set, get) => {
       });
       try {
         const res = await invoke<RunResult>("run_tests", {
-          req: { path, tests: s.tests.map((t) => ({ input: t.input, expected: t.expected || null })), timeLimitMs: s.timeLimitMs, memoryLimitMb: s.memoryLimitMb, only },
+          req: { path, tests: s.tests.map((t) => ({ input: t.input, expected: t.expected || null })), timeLimitMs: s.timeLimitMs, memoryLimitMb: s.memoryLimitMb, only, leetcode: /LeetCode|NeetCode/i.test(s.problem?.group ?? "") },
         });
         if (get().path !== path) return;
         set((st) => ({

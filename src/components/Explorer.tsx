@@ -9,7 +9,7 @@ type Pending = { kind: "file" | "folder"; dir: string } | { kind: "rename"; path
 interface Menu { x: number; y: number; entry: Entry | null }
 
 export function Explorer() {
-  const { folder, treeVersion, active, openFile, openFolder, refreshTree, notify, ask, pathRenamed, pathDeleted } = useApp();
+  const { folder, treeVersion, active, openFile, openFolder, closeFolder, refreshTree, notify, ask, pathRenamed, pathDeleted } = useApp();
   const [children, setChildren] = useState<Record<string, Entry[]>>({});
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<string | null>(null);
@@ -162,6 +162,7 @@ export function Explorer() {
           <button title="New Folder" onClick={() => startNew("folder")}>{Icon.newFolder()}</button>
           <button title="Refresh" onClick={refreshTree}>{Icon.refresh()}</button>
           <button title="Collapse Folders" onClick={collapseAll}>{Icon.collapse()}</button>
+          <button title="Close Folder" onClick={() => closeFolder()}>{Icon.close()}</button>
         </div>
       </div>
       <div className="tree-root" onClick={() => setSelected(folder)}>

@@ -1,6 +1,6 @@
-// The Run panel: test cases for the active file, run them all (Ctrl+Enter) or one at a time,
-// and see each verdict with time and memory, like an online judge.
-import { useRef, type JSX } from "react";
+// The Run panel, laid out like HackerRank's: a result line, a row of test-case tabs with a
+// pass/fail mark, and the selected case's input, your output and the expected output.
+import { useEffect, useRef, useState } from "react";
 import { useApp } from "../store";
 import { useRun, canRun, TOOL_NAMES, type Test, type Verdict } from "../run";
 import { baseName } from "../lib/api";
@@ -11,157 +11,169 @@ const VERDICT_TEXT: Record<Verdict, string> = {
 };
 
 const lines = (s: string) => s.replace(/\r\n/g, "\n").replace(/\s+$/, "").split("\n").map((l) => l.trimEnd());
+const memory = (kb: number) => (kb >= 1024 ? (kb / 1024).toFixed(1) + " MB" : kb + " KB");
 
-/** A textarea that grows with its content (2 to 14 lines). */
-function Field({ label, value, onChange, placeholder, readOnly, mark }: { label: string; value: string; onChange?: (v: string) => void; placeholder?: string; readOnly?: boolean; mark?: JSX.Element }) {
-  const rows = Math.max(2, Math.min(14, value.split("\n").length));
+/** An editable box that grows with its content (3 to 16 lines); Tab types a tab. */
+function Box({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+  const rows = Math.max(3, Math.min(16, value.split("\n").length + 1));
   return (
-    <label className="field">
-      <span className="field-label">{label}{mark}</span>
+    <section className="case-section">
+      <h4>{label}</h4>
       <textarea
+        className="case-box"
         spellCheck={false}
         rows={rows}
         value={value}
-        readOnly={readOnly}
         placeholder={placeholder}
-        onChange={(e) => onChange?.(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Tab" && !readOnly) { // Tab types a tab, like an editor
+          if (e.key === "Tab") {
             e.preventDefault();
             const t = e.currentTarget, a = t.selectionStart, b = t.selectionEnd;
-            onChange?.(t.value.slice(0, a) + "\t" + t.value.slice(b));
+            onChange(t.value.slice(0, a) + "\t" + t.value.slice(b));
             requestAnimationFrame(() => t.setSelectionRange(a + 1, a + 1));
           }
         }}
       />
-    </label>
+    </section>
   );
 }
 
-/** The program's output; on Wrong Answer, lines that differ from the expected output are marked. */
-function Output({ test }: { test: Test }) {
+/** Your output; on Wrong Answer the lines that differ from the expected output are marked. */
+function YourOutput({ test }: { test: Test }) {
   const r = test.result!;
   const out = lines(r.output);
   const exp = lines(test.expected);
   const wa = r.verdict === "WA";
   return (
-    <div className="field">
-      <span className="field-label">Output{wa && <span className="hint-wa">differences marked</span>}</span>
-      <pre className="output">
-        {r.output.trim() === "" ? <span className="muted">(no output)</span> : out.map((l, i) => (
-          <div key={i} className={wa && l !== (exp[i] ?? null) ? "diff" : undefined} title={wa && l !== exp[i] ? `Expected: ${exp[i] ?? "(nothing)"}` : undefined}>{l || " "}</div>
-        ))}
-        {wa && exp.length > out.length && <div className="diff missing">(missing {exp.length - out.length} more line{exp.length - out.length > 1 ? "s" : ""})</div>}
+    <section className="case-section">
+      <h4>Your output (stdout)</h4>
+      <pre className="case-box output">
+        {r.output.trim() === "" ? <span className="muted">No output</span> : out.map((l, i) => {
+          const differs = wa && l !== (exp[i] ?? null);
+          return <div key={i} className={differs ? "diff" : undefined} title={differs ? `Expected: ${exp[i] ?? "nothing"}` : undefined}>{l || " "}</div>;
+        })}
+        {wa && exp.length > out.length && <div className="diff missing">{exp.length - out.length} more line{exp.length - out.length > 1 ? "s" : ""} expected</div>}
       </pre>
-      {r.stderr.trim() && (
-        <>
-          <span className="field-label">Error output</span>
-          <pre className="output stderr">{r.stderr.trimEnd()}</pre>
-        </>
-      )}
-    </div>
-  );
-}
-
-function TestCard({ test, n }: { test: Test; n: number }) {
-  const { updateTest, removeTest, run, running } = useRun();
-  const r = test.result;
-  return (
-    <section className={"test-card" + (r ? " v-" + r.verdict : "") + (test.pending ? " pending" : "")}>
-      <header>
-        <span className="test-title">Test {n}</span>
-        {test.pending && <span className="badge running"><span className="spinner" />Running</span>}
-        {r && !test.pending && <span className={"badge v-" + r.verdict} title={VERDICT_TEXT[r.verdict]}>{r.verdict === "OK" ? "Done" : r.verdict}</span>}
-        {r && !test.pending && r.verdict !== "STOPPED" && <span className="stats">{r.timeMs} ms · {r.memoryKb >= 1024 ? (r.memoryKb / 1024).toFixed(1) + " MB" : r.memoryKb + " KB"}</span>}
-        <div className="grow" />
-        <button className="icon-btn" title="Run this test" disabled={running} onClick={() => run(test.id)}>{Icon.run(13)}</button>
-        <button className="icon-btn" title="Delete this test" onClick={() => removeTest(test.id)}>{Icon.trash(14)}</button>
-      </header>
-      {r?.message && <div className={"test-message" + (r.verdict === "RE" ? " error" : "")}>{r.message}</div>}
-      <Field label="Input" value={test.input} onChange={(v) => updateTest(test.id, { input: v })} placeholder="What the program reads (stdin)" />
-      <Field label="Expected output" value={test.expected} onChange={(v) => updateTest(test.id, { expected: v })} placeholder="Optional: to check the answer" />
-      {r && <Output test={test} />}
     </section>
   );
 }
 
-function Summary() {
-  const { tests, running, phase } = useRun();
-  const done = tests.filter((t) => t.result && !t.pending);
-  if (running) return <div className="run-summary busy"><span className="spinner" />{phase === "compile" ? "Compiling…" : `Running test ${done.length + 1} of ${tests.filter((t) => t.pending).length + done.length}…`}</div>;
+function Mark({ test }: { test: Test }) {
+  if (test.pending) return <span className="mark"><span className="spinner" /></span>;
+  const v = test.result?.verdict;
+  if (!v) return <span className="mark dot" />;
+  if (v === "AC") return <span className="mark ok">{Icon.check(12)}</span>;
+  if (v === "OK" || v === "STOPPED") return <span className="mark dot done" />;
+  return <span className={"mark " + (v === "TLE" || v === "MLE" ? "warn" : "bad")}>{Icon.cross(11)}</span>;
+}
+
+function Result() {
+  const { tests, running, phase, compile, missing, error } = useRun();
+  if (running) return <div className="result busy"><span className="spinner" />{phase === "compile" ? "Compiling" : "Running test cases"}</div>;
+  if (missing) return <div className="result bad">{TOOL_NAMES[missing] ?? missing} isn't installed</div>;
+  if (error) return <div className="result bad">Can't run this file</div>;
+  if (compile && !compile.ok) return <div className="result bad">Compilation error</div>;
+  const done = tests.filter((t) => t.result);
   if (!done.length) return null;
-  const judged = done.filter((t) => t.result!.verdict !== "OK");
-  const passed = done.filter((t) => t.result!.verdict === "AC").length;
-  if (!judged.length) return <div className="run-summary">Ran {done.length} test{done.length > 1 ? "s" : ""}. Add expected outputs to check answers.</div>;
-  const all = passed === judged.length;
-  return <div className={"run-summary " + (all ? "pass" : "fail")}>{all ? `All ${passed} passed` : `${passed} of ${judged.length} passed`}</div>;
+  const judged = done.filter((t) => t.result!.verdict !== "OK" && t.result!.verdict !== "STOPPED");
+  const failed = judged.filter((t) => t.result!.verdict !== "AC").length;
+  if (!judged.length) return <div className="result">Ran {done.length} test case{done.length > 1 ? "s" : ""}. Add expected outputs to check them.</div>;
+  return failed === 0
+    ? <div className="result ok">{judged.length === 1 ? "Test case passed" : `All ${judged.length} test cases passed`}</div>
+    : <div className="result bad">{failed} of {judged.length} test case{judged.length > 1 ? "s" : ""} failed</div>;
 }
 
 export function RunPanel() {
   const { active } = useApp();
   const st = useRun();
-  const list = useRef<HTMLDivElement>(null);
+  const [selected, setSelected] = useState<number | null>(null);
+  const wasRunning = useRef(false);
+
+  // after a run, open the first failing case (like HackerRank)
+  useEffect(() => {
+    if (wasRunning.current && !st.running) {
+      const bad = st.tests.find((t) => t.result && !["AC", "OK", "STOPPED"].includes(t.result.verdict));
+      if (bad) setSelected(bad.id);
+    }
+    wasRunning.current = st.running;
+  }, [st.running, st.tests]);
 
   if (!active || !canRun(active)) {
     return (
       <aside className="run-panel" style={{ width: st.width }}>
-        <div className="side-header">RUN<div className="side-actions"><button title="Close" onClick={() => st.toggle(false)}>{Icon.close(14)}</button></div></div>
-        <div className="run-empty">
-          <div className="run-empty-icon">{Icon.run(28)}</div>
-          <p>Open a C, C++, Java, Python, JavaScript, Go, Rust, Kotlin or C# file to run it against test cases.</p>
-        </div>
+        <div className="panel-head"><span className="panel-title">Test cases</span><button className="icon-btn" title="Close" onClick={() => st.toggle(false)}>{Icon.close(14)}</button></div>
+        <div className="run-empty">Open a C, C++, Java, Python, JavaScript, Go, Rust, Kotlin or C# file to run it against test cases.</div>
       </aside>
     );
   }
 
+  const test = st.tests.find((t) => t.id === selected) ?? st.tests[0];
+  const index = test ? st.tests.indexOf(test) : 0;
+  const r = test?.result;
   const c = st.compile;
+
   return (
     <aside className="run-panel" style={{ width: st.width }}>
-      <div className="side-header">
-        Run <span className="side-file">{baseName(active)}</span>
-        <div className="side-actions"><button title="Close" onClick={() => st.toggle(false)}>{Icon.close(14)}</button></div>
+      <div className="panel-head">
+        <span className="panel-title" title={active}>{st.problem?.name ?? baseName(active)}</span>
+        <button className="icon-btn" title="Close (Ctrl+Shift+B)" onClick={() => st.toggle(false)}>{Icon.close(14)}</button>
       </div>
 
       <div className="run-toolbar">
         {st.running
           ? <button className="btn danger run-btn" onClick={st.stop}>{Icon.stop(12)} Stop</button>
-          : <button className="btn primary run-btn" onClick={() => st.run()} title="Run all tests (Ctrl+Enter)">{Icon.run(12)} Run all</button>}
+          : <button className="btn primary run-btn" onClick={() => st.run()} title="Run all test cases (Ctrl+Enter)">{Icon.run(12)} Run</button>}
         <div className="limits">
-          <label title="Time limit per test"><input type="number" min={100} step={500} value={st.timeLimitMs} onChange={(e) => st.setLimits(+e.target.value, st.memoryLimitMb)} />ms</label>
-          <label title="Memory limit"><input type="number" min={16} step={64} value={st.memoryLimitMb} onChange={(e) => st.setLimits(st.timeLimitMs, +e.target.value)} />MB</label>
+          <label title="Time limit per test case"><input type="number" min={100} step={500} value={st.timeLimitMs} onChange={(e) => st.setLimits(+e.target.value, st.memoryLimitMb)} /> ms</label>
+          <label title="Memory limit"><input type="number" min={16} step={64} value={st.memoryLimitMb} onChange={(e) => st.setLimits(st.timeLimitMs, +e.target.value)} /> MB</label>
         </div>
       </div>
 
-      {st.problem && (
-        <div className="problem">
-          <span className="problem-name">{st.problem.name}</span>
-          {st.problem.group && <span className="muted"> · {st.problem.group}</span>}
-        </div>
-      )}
+      <Result />
 
-      <Summary />
-
-      <div className="run-list" ref={list}>
-        {st.missing && (
-          <div className="run-alert">
-            <b>{TOOL_NAMES[st.missing] ?? st.missing} isn't installed.</b>
-            <p>NppDev needs it to run this file. Install it, then press Run again.</p>
-          </div>
-        )}
-        {st.error && <div className="run-alert"><p>{st.error}</p></div>}
+      <div className="run-body">
+        {st.missing && <p className="note">NppDev needs {TOOL_NAMES[st.missing] ?? st.missing} to run this file. Install it, then run again.</p>}
+        {st.error && <p className="note">{st.error}</p>}
         {c && !c.ok && !st.missing && (
-          <div className="compile-error">
-            <div className="field-label">Compilation error</div>
-            <pre className="output stderr">{c.output || "The compiler failed without a message."}</pre>
+          <section className="case-section">
+            <h4>Compiler message</h4>
+            <pre className="case-box output stderr">{c.output || "The compiler failed without a message."}</pre>
+          </section>
+        )}
+
+        <div className="case-tabs" role="tablist">
+          {st.tests.map((t, i) => (
+            <button key={t.id} role="tab" aria-selected={t === test} className={"case-tab" + (t === test ? " selected" : "")} onClick={() => setSelected(t.id)}>
+              <Mark test={t} />Test case {i + 1}
+            </button>
+          ))}
+          <button className="case-tab add" title="Add a test case" onClick={() => { st.addTest(); setTimeout(() => setSelected(useRun.getState().tests.slice(-1)[0]?.id ?? null), 0); }}>{Icon.plus(13)}</button>
+        </div>
+
+        {test && (
+          <div className="case">
+            <div className="case-head">
+              {r && !test.pending
+                ? <span className={"verdict v-" + r.verdict}>{VERDICT_TEXT[r.verdict]}</span>
+                : <span className="verdict muted">{test.pending ? "Running" : "Not run yet"}</span>}
+              {r && !test.pending && r.verdict !== "STOPPED" && <span className="stats">{r.timeMs} ms, {memory(r.memoryKb)}</span>}
+              <div className="grow" />
+              <button className="icon-btn" title="Run this test case" disabled={st.running} onClick={() => st.run(test.id)}>{Icon.run(12)}</button>
+              <button className="icon-btn" title="Delete this test case" onClick={() => st.removeTest(test.id)}>{Icon.trash(14)}</button>
+            </div>
+            {r?.message && <p className={"note" + (r.verdict === "RE" ? " bad" : "")}>{r.message}</p>}
+            <Box label="Input (stdin)" value={test.input} onChange={(v) => st.updateTest(test.id, { input: v })} placeholder={`What the program reads for test case ${index + 1}`} />
+            {r && !test.pending && <YourOutput test={test} />}
+            <Box label="Expected output" value={test.expected} onChange={(v) => st.updateTest(test.id, { expected: v })} placeholder="Optional: the answer to check against" />
+            {r?.stderr.trim() && (
+              <section className="case-section">
+                <h4>Error output (stderr)</h4>
+                <pre className="case-box output stderr">{r.stderr.trimEnd()}</pre>
+              </section>
+            )}
           </div>
         )}
-        {c?.ok && !c.cached && c.ms > 0 && <div className="compile-ok">Compiled in {(c.ms / 1000).toFixed(1)} s</div>}
-
-        {st.tests.map((t, i) => <TestCard key={t.id} test={t} n={i + 1} />)}
-
-        <button className="add-test" onClick={() => { st.addTest(); requestAnimationFrame(() => list.current?.scrollTo({ top: list.current.scrollHeight, behavior: "smooth" })); }}>
-          {Icon.plus(14)} Add test case
-        </button>
       </div>
     </aside>
   );

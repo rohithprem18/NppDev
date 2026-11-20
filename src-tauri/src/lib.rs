@@ -1,5 +1,6 @@
 mod fs;
 mod import;
+mod leetcode;
 mod lsp;
 mod runner;
 mod settings;
@@ -44,9 +45,15 @@ pub fn run() {
             if !paths.is_empty() { let _ = app.emit("open-paths", paths); }
         }))
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_window_state::Builder::default().build())
+        // remembers size and position, but never the Windows frame: NppDev draws its own title bar
+        .plugin(
+            tauri_plugin_window_state::Builder::default()
+                .with_state_flags(tauri_plugin_window_state::StateFlags::all() & !tauri_plugin_window_state::StateFlags::DECORATIONS)
+                .build(),
+        )
         .manage(StartupPaths(Mutex::new(first)))
         .setup(|app| {
+            if let Some(w) = app.get_webview_window("main") { let _ = w.set_decorations(false); }
             // Competitive Companion sends problems here from the browser
             let port = import::listen(app.handle().clone());
             app.manage(import::CompanionPort(port));

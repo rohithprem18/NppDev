@@ -143,9 +143,11 @@ export function solutionText(lang: Lang, stem: string, problem: { name: string; 
   const info = [problem.name, problem.url ?? ""].filter(Boolean);
   const starter = problem.starter?.[lang.id];
   if (starter) {
-    const note = problem.functionBased
-      ? ["", "Write the function below. The Run panel's tests hold the example arguments, one per line;", "to run them here, add a main that reads them and prints the result."]
-      : [];
+    const leetcode = /LeetCode|NeetCode/i.test(problem.group ?? "");
+    const note = !problem.functionBased ? []
+      : leetcode && ["cpp", "java", "python", "javascript"].includes(lang.id)
+        ? ["", "Write the method below and press Ctrl+Enter: NppDev calls it with each test's arguments", "(one per line in the Input box) and checks the answer, like LeetCode."]
+        : ["", "Write the function below. The tests hold the example arguments, one per line;", "to run them here, add a main that reads them and prints the result."];
     return header(comment, [...info, ...note]) + "\n" + starter.replace(/\r\n/g, "\n") + "\n";
   }
   const body = (T[lang.id] ?? "$0\n").replace(/NAME/g, stem).replace("$0", "");
