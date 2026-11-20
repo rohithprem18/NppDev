@@ -2,25 +2,21 @@
 import { useEffect, useRef } from "react";
 import { useApp } from "../store";
 import { useCursor } from "../lib/cursor";
-import { useRun } from "../run";
 import { usePalette } from "./Palette";
 import { baseName } from "../lib/api";
 import { fileType, LANGUAGE_NAMES } from "../lib/fileTypes";
 import { Icon } from "./Icons";
 
 export function ActivityBar() {
-  const { sidebarVisible, toggleSidebar, theme, setTheme } = useApp();
-  const runOpen = useRun((s) => s.open);
-  const toggleRun = useRun.getState().toggle;
+  const sidebarVisible = useApp((s) => s.sidebarVisible);
+  const sideView = useApp((s) => s.sideView);
+  const { showSide } = useApp.getState();
   return (
     <nav className="activity-bar">
-      <button className={sidebarVisible ? "active" : ""} title="Explorer (Ctrl+B)" onClick={toggleSidebar}>{Icon.files(22)}</button>
-      <button className={runOpen ? "active" : ""} title="Run & test cases (Ctrl+Shift+B)" onClick={() => toggleRun()}>{Icon.beaker(22)}</button>
+      <button className={sidebarVisible && sideView === "explorer" ? "active" : ""} title="Explorer (Ctrl+B)" onClick={() => showSide("explorer")}>{Icon.files(22)}</button>
       <div className="grow" />
       <button title="Command Palette (Ctrl+Shift+P)" onClick={() => usePalette.getState().show(">")}>{Icon.command(20)}</button>
-      <button title={theme === "dark" ? "Light theme" : "Dark theme"} onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-        {theme === "dark" ? Icon.sun(20) : Icon.moon(20)}
-      </button>
+      <button className={sidebarVisible && sideView === "settings" ? "active" : ""} title="Settings (Ctrl+,)" onClick={() => showSide("settings")}>{Icon.settings(21)}</button>
     </nav>
   );
 }

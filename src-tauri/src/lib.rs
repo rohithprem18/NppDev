@@ -3,6 +3,7 @@ mod leetcode;
 mod lsp;
 mod runner;
 mod settings;
+mod setup;
 mod tests;
 mod tools;
 
@@ -80,6 +81,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             startup_paths,
             start_update,
+            setup::language_status,
+            setup::install_language,
             fs::list_dir,
             fs::list_files,
             lsp::lsp_start,

@@ -4,6 +4,7 @@ import { useApp } from "./store";
 import * as ws from "./lib/workspace";
 import { baseName } from "./lib/api";
 import { Explorer } from "./components/Explorer";
+import { Settings } from "./components/Settings";
 import { EditorArea } from "./components/EditorArea";
 import { invoke } from "@tauri-apps/api/core";
 import { RunPanel } from "./components/RunPanel";
@@ -14,7 +15,7 @@ import { useRun } from "./run";
 import { ActivityBar, StatusBar, ConfirmDialog, Toast } from "./components/Chrome";
 
 export default function App() {
-  const { ready, init, sidebarVisible, sidebarWidth, setSidebarWidth, folder, active, dirty } = useApp();
+  const { ready, init, sidebarVisible, sideView, sidebarWidth, setSidebarWidth, folder, active, dirty } = useApp();
   const runOpen = useRun((r) => r.open);
   const dragging = useRef<"side" | "run" | null>(null);
 
@@ -45,6 +46,7 @@ export default function App() {
         s0.setFontSize(k === "0" ? 15 : s0.fontSize + (k === "-" ? -1 : 1));
         return;
       }
+      if (k === ",") { e.preventDefault(); e.stopPropagation(); s.showSide("settings"); return; }
       if (k === "enter") { e.preventDefault(); e.stopPropagation(); useRun.getState().run(); return; }
       if (k === "s" && !e.shiftKey) { e.preventDefault(); s.save(); }
       else if (k === "s" && e.shiftKey) { e.preventDefault(); s.saveAs(); }
@@ -104,7 +106,7 @@ export default function App() {
         <ActivityBar />
         {sidebarVisible && (
           <>
-            <aside className="sidebar" style={{ width: sidebarWidth }}><Explorer /></aside>
+            <aside className="sidebar" style={{ width: sidebarWidth }}>{sideView === "settings" ? <Settings /> : <Explorer />}</aside>
             <div className="sash" onMouseDown={() => { dragging.current = "side"; document.body.classList.add("resizing"); }} />
           </>
         )}

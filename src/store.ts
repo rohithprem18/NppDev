@@ -31,6 +31,7 @@ interface Persisted {
   defaultLang: string;
   /** A release the user chose to skip in the update box. */
   skippedVersion: string | null;
+  editorFont: string;
 }
 
 export interface Confirm {
@@ -47,6 +48,8 @@ interface State extends Persisted {
   active: string | null;
   dirty: Record<string, boolean>;
   sidebarVisible: boolean;
+  /** What the sidebar shows. */
+  sideView: "explorer" | "settings";
   treeVersion: number;                 // bump to make the Explorer reload
   toast: { text: string; kind: "info" | "error" } | null;
   confirm: Confirm | null;
@@ -70,13 +73,16 @@ interface State extends Persisted {
   notify(text: string, kind?: "info" | "error"): void;
   ask(c: Omit<Confirm, "resolve">): Promise<string>;
   toggleSidebar(): void;
+  /** Show this sidebar view; clicking the one already shown hides the sidebar. */
+  showSide(view: "explorer" | "settings"): void;
+  setEditorFont(font: string): void;
   setSidebarWidth(w: number): void;
   setDefaultLang(id: string): void;
   setFontSize(size: number): void;
   setSkippedVersion(v: string | null): void;
 }
 
-const DEFAULTS: Persisted = { theme: "dark", recent: [], lastFolder: null, sessions: {}, sidebarWidth: 260, fontSize: 15, defaultLang: "cpp", skippedVersion: null };
+const DEFAULTS: Persisted = { theme: "dark", recent: [], lastFolder: null, sessions: {}, sidebarWidth: 260, fontSize: 15, defaultLang: "cpp", skippedVersion: null, editorFont: "Hack" };
 let saveTimer = 0;
 
 export const useApp = create<State>((set, get) => {
@@ -85,7 +91,7 @@ export const useApp = create<State>((set, get) => {
     clearTimeout(saveTimer);
     saveTimer = window.setTimeout(() => {
       const s = get();
-      const out: Persisted = { theme: s.theme, recent: s.recent, lastFolder: s.folder, sessions: s.sessions, sidebarWidth: s.sidebarWidth, fontSize: s.fontSize, defaultLang: s.defaultLang, skippedVersion: s.skippedVersion };
+      const out: Persisted = { theme: s.theme, recent: s.recent, lastFolder: s.folder, sessions: s.sessions, sidebarWidth: s.sidebarWidth, fontSize: s.fontSize, defaultLang: s.defaultLang, skippedVersion: s.skippedVersion, editorFont: s.editorFont };
       if (s.folder) out.sessions = { ...s.sessions, [s.folder]: { tabs: s.tabs.map((t) => t.path).filter((p) => !ws.isUntitled(p)), active: s.active && !ws.isUntitled(s.active) ? s.active : null } };
       api.saveSettings(JSON.stringify(out, null, 1)).catch(() => {});
     }, 500);
@@ -107,6 +113,7 @@ export const useApp = create<State>((set, get) => {
     active: null,
     dirty: {},
     sidebarVisible: true,
+    sideView: "explorer",
     treeVersion: 0,
     toast: null,
     confirm: null,
@@ -286,6 +293,11 @@ export const useApp = create<State>((set, get) => {
     },
 
     toggleSidebar: () => set((s) => ({ sidebarVisible: !s.sidebarVisible })),
+    showSide: (view) => set((s) => (s.sidebarVisible && s.sideView === view ? { sidebarVisible: false } : { sidebarVisible: true, sideView: view })),
+    setEditorFont(editorFont) {
+      set({ editorFont });
+      persist();
+    },
     setSkippedVersion(skippedVersion) {
       set({ skippedVersion });
       persist();

@@ -17,9 +17,9 @@ interface ServerDef {
 }
 
 const SERVERS: Record<string, ServerDef> = {
-  cpp: { key: "cpp", files: /\.(c|cc|cpp|cxx|c\+\+|h|hh|hpp|hxx)$/i, missing: { clangd: "clangd isn't installed, so C/C++ has no IntelliSense." } },
-  python: { key: "python", files: /\.pyw?$/i, missing: { python: "", pylsp: "pylsp isn't installed, so Python has no IntelliSense." } },
-  java: { key: "java", files: /\.java$/i, missing: { java21: "Java IntelliSense needs JDK 21 or newer.", jdtls: "The Java language server (jdtls) isn't installed." } },
+  cpp: { key: "cpp", files: /\.(c|cc|cpp|cxx|c\+\+|h|hh|hpp|hxx)$/i, missing: { clangd: "C/C++ IntelliSense needs clangd: install it in Settings > Languages." } },
+  python: { key: "python", files: /\.pyw?$/i, missing: { python: "", pylsp: "Python IntelliSense needs pylsp: install it in Settings > Languages." } },
+  java: { key: "java", files: /\.java$/i, missing: { java21: "Java IntelliSense needs JDK 21 or newer: see Settings > Languages.", jdtls: "Java IntelliSense isn't installed yet: install it in Settings > Languages (one click)." } },
 };
 
 const LANG_TO_SERVER: Record<string, string> = { c: "cpp", cpp: "cpp", python: "python", java: "java" };
@@ -125,6 +125,7 @@ export function ensureLsp(lang: string, root: string | null): void {
     } catch (e) {
       const why = def.missing[String(e)];
       if (why && !warned.has(key)) { warned.add(key); onProblem(why); }
+      running.delete(key); // try again next time a file opens (it may be installed by then)
       return null;
     }
     const { MonacoLspClient } = await import("@monaco-lsp");

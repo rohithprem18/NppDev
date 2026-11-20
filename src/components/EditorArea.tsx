@@ -15,6 +15,7 @@ export function EditorArea() {
   const dirty = useApp((s) => s.dirty);
   const theme = useApp((s) => s.theme);
   const fontSize = useApp((s) => s.fontSize);
+  const editorFont = useApp((s) => s.editorFont);
   const { activate, closeTab } = useApp.getState();
   const running = useRun((s) => s.running);
   const { run, stop } = useRun.getState();
@@ -43,6 +44,12 @@ export function EditorArea() {
 
   useEffect(() => { monaco.editor.setTheme(theme === "dark" ? "nppdev-dark" : "nppdev-light"); }, [theme]);
   useEffect(() => { editor.current?.updateOptions({ fontSize }); }, [fontSize]);
+  useEffect(() => {
+    const family = `"${editorFont}", Hack, Consolas, "Ubuntu Mono", monospace`;
+    document.documentElement.style.setProperty("--code", family);
+    editor.current?.updateOptions({ fontFamily: family });
+    document.fonts.load(`15px "${editorFont}"`).catch(() => {}).finally(() => monaco.editor.remeasureFonts());
+  }, [editorFont]);
 
   // show the active tab's document, keeping each one's cursor and scroll position
   useEffect(() => {

@@ -56,9 +56,9 @@ OS                         Windows: WebView2 · Ubuntu: WebKitGTK
       Command Palette; Quick Open; VS Code keys.
 - [x] ~~**M4 — problem import**~~ (removed 2026-11-20 at the owner's request: core editor only): Competitive Companion listener; import by URL for Codeforces, AtCoder, HackerRank, HackerEarth, NeetCode,
       CodeChef, GeeksforGeeks, LeetCode; creates the file + test cases.
-- [ ] **M5 — tools & extras**: tools detection + one-click installer; integrated terminal; Git panel;
+- [x] **M5 — tools & extras** (Settings > Languages with one-click installs; terminal, Git panel and stress testing dropped: owner wants the core editor only): tools detection + one-click installer; integrated terminal; Git panel;
       stress testing; settings export/import.
-- [ ] **M6 — ship**: Windows = plain NppDev.exe installed by install.ps1 (no setup program) + Ubuntu .deb/.AppImage; update check; install.ps1 / install.sh;
+- [x] **M6 — ship**: Windows = plain NppDev.exe installed by install.ps1 (no setup program) + Ubuntu .deb/.AppImage; update check; install.ps1 / install.sh;
       remove the old Notepad++ files; README; release NppDev v2.0.0.
 
 ## Progress log
@@ -99,3 +99,7 @@ OS                         Windows: WebView2 · Ubuntu: WebKitGTK
   file (uncontrolled text boxes, no cursor jumps). LeetCode-style files still run via src/lc/.
   Editor: no caret/scroll animation; cursor position in its own store (no app re-render per key).
   .github/workflows/linux.yml builds on Ubuntu 22.04, runs the judge tests there, uploads .deb + AppImage.
+- 2026-11-20 — Settings panel (theme, editor font and size, update check, Languages status with
+  one-click jdtls/pylsp/winget installs); update box on start (GitHub latest release); caret
+  alignment fix (load Hack before Monaco measures). Old Notepad++ files removed; README rewritten;
+  merged to main; v2.0.0 released with NppDev.exe, .deb and AppImage.

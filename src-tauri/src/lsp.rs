@@ -35,14 +35,18 @@ struct Msg {
     msg: String,
 }
 
-fn has_pylsp(python: &Path) -> bool {
-    static CACHE: Mutex<Option<bool>> = Mutex::new(None);
-    let mut c = CACHE.lock().unwrap();
+static PYLSP: Mutex<Option<bool>> = Mutex::new(None);
+
+/// Check again next time (after installing something).
+pub fn forget_checks() { *PYLSP.lock().unwrap() = None; }
+
+pub fn has_pylsp(python: &Path) -> bool {
+    let mut c = PYLSP.lock().unwrap();
     *c.get_or_insert_with(|| quiet_command(python).args(["-c", "import pylsp"]).stdout(Stdio::null()).stderr(Stdio::null()).status().map(|s| s.success()).unwrap_or(false))
 }
 
 /// jdtls folder (with plugins/org.eclipse.equinox.launcher_*.jar): NppDev's tools folder first.
-fn find_jdtls(app: &AppHandle) -> Option<(PathBuf, PathBuf)> {
+pub fn find_jdtls(app: &AppHandle) -> Option<(PathBuf, PathBuf)> {
     let mut dirs = vec![];
     if let Ok(d) = app.path().app_local_data_dir() { dirs.push(d.join("tools").join("jdtls")); }
     if let Some(l) = std::env::var_os("LOCALAPPDATA") { dirs.push(PathBuf::from(&l).join("NppDev").join("jdtls")); }
@@ -56,7 +60,7 @@ fn find_jdtls(app: &AppHandle) -> Option<(PathBuf, PathBuf)> {
 }
 
 /// The java to run jdtls with: it needs Java 21 or newer.
-fn java_for_jdtls() -> Option<PathBuf> {
+pub fn java_for_jdtls() -> Option<PathBuf> {
     let java = tools::find("java")?;
     let v = tools::version(&java, "-version").unwrap_or_default();
     let major: u32 = v.split('"').nth(1).and_then(|s| s.split('.').next()).and_then(|s| s.parse().ok()).unwrap_or(0);
