@@ -41,7 +41,7 @@ function Languages() {
     <section className="set-section">
       <div className="set-title">
         <h3>Languages</h3>
-        <button className="icon-btn" title="Check again" onClick={() => load(true)}>{Icon.refresh(14)}</button>
+        <button className="icon-btn" title="Check again" aria-label="Check again" onClick={() => load(true)}>{Icon.refresh(14)}</button>
       </div>
       {rows === null && <p className="set-hint">Checking…</p>}
       {rows?.map((r) => (
@@ -82,8 +82,8 @@ export function Settings() {
           <div className="set-row">
             <span>Theme</span>
             <div className="segmented">
-              <button className={theme === "dark" ? "on" : ""} onClick={() => setTheme("dark")}>{Icon.moon(13)} Dark</button>
-              <button className={theme === "light" ? "on" : ""} onClick={() => setTheme("light")}>{Icon.sun(13)} Light</button>
+              <button className={theme === "dark" ? "on" : ""} aria-pressed={theme === "dark"} onClick={() => setTheme("dark")}>{Icon.moon(13)} Dark</button>
+              <button className={theme === "light" ? "on" : ""} aria-pressed={theme === "light"} onClick={() => setTheme("light")}>{Icon.sun(13)} Light</button>
             </div>
           </div>
           <div className="set-row">
@@ -95,9 +95,9 @@ export function Settings() {
           <div className="set-row">
             <span>Font size</span>
             <div className="stepper">
-              <button title="Smaller (Ctrl+-)" onClick={() => setFontSize(fontSize - 1)}>−</button>
+              <button title="Smaller (Ctrl+-)" aria-label="Smaller (Ctrl+-)" onClick={() => setFontSize(fontSize - 1)}>−</button>
               <span>{fontSize}</span>
-              <button title="Bigger (Ctrl+=)" onClick={() => setFontSize(fontSize + 1)}>+</button>
+              <button title="Bigger (Ctrl+=)" aria-label="Bigger (Ctrl+=)" onClick={() => setFontSize(fontSize + 1)}>+</button>
             </div>
           </div>
           <p className="set-hint">Fonts other than Hack are used if they're installed on this computer.</p>
@@ -108,8 +108,8 @@ export function Settings() {
           <div className="set-row">
             <span>Auto save</span>
             <div className="segmented">
-              <button className={autoSave ? "on" : ""} onClick={() => setAutoSave(true)}>On</button>
-              <button className={!autoSave ? "on" : ""} onClick={() => setAutoSave(false)}>Off</button>
+              <button className={autoSave ? "on" : ""} aria-pressed={autoSave} onClick={() => setAutoSave(true)}>On</button>
+              <button className={!autoSave ? "on" : ""} aria-pressed={!autoSave} onClick={() => setAutoSave(false)}>Off</button>
             </div>
           </div>
           <p className="set-hint">Saves a second after you stop typing, and when you switch files or windows. New files are saved once you name them (Ctrl+S).</p>

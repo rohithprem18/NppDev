@@ -103,7 +103,7 @@ export function EditorArea() {
             >
               <FileIcon name={t.name} />
               <span className="tab-name">{t.name}</span>
-              <button className="tab-close" title="Close (Ctrl+W)" onClick={(e) => { e.stopPropagation(); closeTab(t.path); }}>
+              <button className="tab-close" title="Close (Ctrl+W)" aria-label={`Close ${t.name} (Ctrl+W)`} onClick={(e) => { e.stopPropagation(); closeTab(t.path); }}>
                 <span className="dot" />
                 {Icon.close(14)}
               </button>

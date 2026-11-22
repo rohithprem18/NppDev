@@ -32,7 +32,7 @@ export function TitleBar() {
         {folder && (
           <span className="tb-folder" title={folder}>
             {baseName(folder)}
-            <button className="tb-close-folder" title="Close Folder" onClick={() => closeFolder()}>{Icon.close(12)}</button>
+            <button className="tb-close-folder" title="Close Folder" aria-label="Close Folder" onClick={() => closeFolder()}>{Icon.close(12)}</button>
           </span>
         )}
       </div>
@@ -44,15 +44,15 @@ export function TitleBar() {
       </button>
 
       <div className="tb-right" data-tauri-drag-region>
-        <button className="tb-btn" title="Minimise" onClick={() => win.minimize()}>
+        <button className="tb-btn" title="Minimise" aria-label="Minimise" onClick={() => win.minimize()}>
           <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M0 5h10" stroke="currentColor" /></svg>
         </button>
-        <button className="tb-btn" title={maximized ? "Restore" : "Maximise"} onClick={() => win.toggleMaximize()}>
+        <button className="tb-btn" title={maximized ? "Restore" : "Maximise"} aria-label={maximized ? "Restore" : "Maximise"} aria-pressed={maximized} onClick={() => win.toggleMaximize()}>
           {maximized
             ? <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 2.5V.5h7v7h-2M.5 2.5h7v7h-7z" fill="none" stroke="currentColor" /></svg>
             : <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect x=".5" y=".5" width="9" height="9" fill="none" stroke="currentColor" /></svg>}
         </button>
-        <button className="tb-btn close" title="Close" onClick={() => win.close()}>
+        <button className="tb-btn close" title="Close" aria-label="Close" onClick={() => win.close()}>
           <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M0 0l10 10M10 0L0 10" stroke="currentColor" /></svg>
         </button>
       </div>

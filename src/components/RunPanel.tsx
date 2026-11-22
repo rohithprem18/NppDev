@@ -112,7 +112,7 @@ export function RunPanel() {
   if (!active || !canRun(active)) {
     return (
       <aside className="run-panel" style={{ width }}>
-        <div className="panel-head"><span className="panel-title">Input and output</span><div className="grow" /><button className="icon-btn" title="Close" onClick={() => st.toggle(false)}>{Icon.close(14)}</button></div>
+        <div className="panel-head"><span className="panel-title">Input and output</span><div className="grow" /><button className="icon-btn" title="Close" aria-label="Close" onClick={() => st.toggle(false)}>{Icon.close(14)}</button></div>
         <div className="run-empty">Open a C, C++, Java, Python, JavaScript, Go, Rust, Kotlin, C# or SQL file to run it.</div>
       </aside>
     );
@@ -125,7 +125,7 @@ export function RunPanel() {
         <label className="limit" title="The longest your program may run on this input">Time limit <input type="number" min={100} step={500} value={tl} onChange={(e) => st.setLimits(+e.target.value, ml)} /> ms</label>
         <label className="limit" title="The most memory your program may use">Memory <input type="number" min={16} step={64} value={ml} onChange={(e) => st.setLimits(tl, +e.target.value)} /> MB</label>
         <div className="grow" />
-        <button className="icon-btn" title="Close (Ctrl+Shift+B)" onClick={() => st.toggle(false)}>{Icon.close(14)}</button>
+        <button className="icon-btn" title="Close (Ctrl+Shift+B)" aria-label="Close (Ctrl+Shift+B)" onClick={() => st.toggle(false)}>{Icon.close(14)}</button>
       </div>
 
       {/\.sql$/i.test(active) ? (

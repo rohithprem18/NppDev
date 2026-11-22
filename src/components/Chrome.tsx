@@ -14,10 +14,10 @@ export function ActivityBar() {
   const { showSide } = useApp.getState();
   return (
     <nav className="activity-bar">
-      <button className={sidebarVisible && sideView === "explorer" ? "active" : ""} title="Explorer (Ctrl+B)" onClick={() => showSide("explorer")}>{Icon.files(22)}</button>
+      <button className={sidebarVisible && sideView === "explorer" ? "active" : ""} title="Explorer (Ctrl+B)" aria-label="Explorer (Ctrl+B)" aria-pressed={sidebarVisible && sideView === "explorer"} onClick={() => showSide("explorer")}>{Icon.files(22)}</button>
       <div className="grow" />
-      <button title="Command Palette (Ctrl+Shift+P)" onClick={() => usePalette.getState().show(">")}>{Icon.command(20)}</button>
-      <button className={sidebarVisible && sideView === "settings" ? "active" : ""} title="Settings (Ctrl+,)" onClick={() => showSide("settings")}>{Icon.settings(21)}</button>
+      <button title="Command Palette (Ctrl+Shift+P)" aria-label="Command Palette (Ctrl+Shift+P)" onClick={() => usePalette.getState().show(">")}>{Icon.command(20)}</button>
+      <button className={sidebarVisible && sideView === "settings" ? "active" : ""} title="Settings (Ctrl+,)" aria-label="Settings (Ctrl+,)" aria-pressed={sidebarVisible && sideView === "settings"} onClick={() => showSide("settings")}>{Icon.settings(21)}</button>
     </nav>
   );
 }

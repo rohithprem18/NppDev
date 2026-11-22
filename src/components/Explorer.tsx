@@ -170,11 +170,11 @@ export function Explorer() {
       <div className="side-header">
         <span>EXPLORER</span>
         <div className="side-actions">
-          <button title="New File" onClick={() => startNew("file")}>{Icon.newFile()}</button>
-          <button title="New Folder" onClick={() => startNew("folder")}>{Icon.newFolder()}</button>
-          <button title="Refresh" onClick={refreshTree}>{Icon.refresh()}</button>
-          <button title="Collapse Folders" onClick={collapseAll}>{Icon.collapse()}</button>
-          <button title="Close Folder" onClick={() => closeFolder()}>{Icon.close()}</button>
+          <button title="New File" aria-label="New File" onClick={() => startNew("file")}>{Icon.newFile()}</button>
+          <button title="New Folder" aria-label="New Folder" onClick={() => startNew("folder")}>{Icon.newFolder()}</button>
+          <button title="Refresh" aria-label="Refresh" onClick={refreshTree}>{Icon.refresh()}</button>
+          <button title="Collapse Folders" aria-label="Collapse Folders" onClick={collapseAll}>{Icon.collapse()}</button>
+          <button title="Close Folder" aria-label="Close Folder" onClick={() => closeFolder()}>{Icon.close()}</button>
         </div>
       </div>
       <div className="tree-root" onClick={() => setSelected(folder)}>
