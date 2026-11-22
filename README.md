@@ -278,6 +278,14 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) for the project layout, coding style, an
 Thanks to everyone who has helped build NppDev!
 
 <!-- CONTRIBUTORS:START -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14%"><a href="https://github.com/rohithprem18"><img src="https://avatars.githubusercontent.com/u/146315115?v=4&s=100" width="80" height="80" alt="rohithprem18"/><br /><sub><b>rohithprem18</b></sub></a><br /><sub>41 commits</sub></td>
+    </tr>
+  </tbody>
+</table>
+<p><sub>1 contributor so far. This list updates automatically after every merged pull request.</sub></p>
 <!-- CONTRIBUTORS:END -->
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
