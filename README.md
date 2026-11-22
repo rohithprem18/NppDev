@@ -19,8 +19,22 @@
     <a href="https://github.com/rohithprem18/NppDev/issues/new?labels=bug">Report Bug</a>
     &middot;
     <a href="https://github.com/rohithprem18/NppDev/issues/new?labels=enhancement">Request Feature</a>
+    &middot;
+    <a href="CONTRIBUTING.md">Contribute</a>
   </p>
 </div>
+
+<p align="center">
+  <a href="https://github.com/rohithprem18/NppDev/releases/latest"><img src="https://img.shields.io/github/v/release/rohithprem18/NppDev?style=flat-square&label=release&color=2f81f7" alt="Latest release"></a>
+  <a href="https://github.com/rohithprem18/NppDev/releases"><img src="https://img.shields.io/github/downloads/rohithprem18/NppDev/total?style=flat-square&color=2f81f7" alt="Downloads"></a>
+  <a href="https://github.com/rohithprem18/NppDev/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/rohithprem18/NppDev/ci.yml?branch=main&style=flat-square&label=CI" alt="CI status"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/rohithprem18/NppDev?style=flat-square" alt="License: GPL-3.0"></a>
+  <br />
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="PRs welcome"></a>
+  <a href="https://github.com/rohithprem18/NppDev/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22"><img src="https://img.shields.io/github/issues/rohithprem18/NppDev/good%20first%20issue?style=flat-square&label=good%20first%20issues&color=7057ff" alt="Good first issues"></a>
+  <a href="#contributors"><img src="https://img.shields.io/github/contributors/rohithprem18/NppDev?style=flat-square&color=orange" alt="Contributors"></a>
+  <a href="https://github.com/rohithprem18/NppDev/stargazers"><img src="https://img.shields.io/github/stars/rohithprem18/NppDev?style=flat-square&color=yellow" alt="Stars"></a>
+</p>
 
 <div align="center">
 
@@ -54,6 +68,8 @@ curl -fsSL https://raw.githubusercontent.com/rohithprem18/NppDev/main/install.sh
     <li><a href="#keyboard-shortcuts">Keyboard Shortcuts</a></li>
     <li><a href="#building-from-source">Building From Source</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#contributors">Contributors</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
   </ol>
@@ -82,6 +98,17 @@ NppDev is a desktop editor made for solving problems: open a file, type the inpu
 * **Updates ask first.** When a new release is out, NppDev shows a box: Update now, Skip this version, or Later.
 * **Fits into Windows.** Start menu entry, "Open with NppDev" on files and folders in File Explorer, one window for everything you open.
 * **Small.** One 7.5 MB program; your projects are never changed by NppDev's settings or tests.
+
+### Built With
+
+<p>
+  <a href="https://tauri.app"><img src="https://img.shields.io/badge/Tauri_2-24C8D8?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri"></a>
+  <a href="https://www.rust-lang.org"><img src="https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white" alt="Rust"></a>
+  <a href="https://react.dev"><img src="https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React"></a>
+  <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"></a>
+  <a href="https://microsoft.github.io/monaco-editor/"><img src="https://img.shields.io/badge/Monaco_Editor-0078D4?style=for-the-badge&logo=visualstudiocode&logoColor=white" alt="Monaco Editor"></a>
+  <a href="https://www.sqlite.org"><img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite"></a>
+</p>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -224,7 +251,34 @@ The judge tests compile and run real programs in every installed language and ch
 - [ ] Stress testing against a brute-force solution
 - [ ] Settings export and import
 
-See the [open issues](https://github.com/rohithprem18/NppDev/issues) for proposed features and known issues.
+See the [open issues](https://github.com/rohithprem18/NppDev/issues) for proposed features and known issues. Want to build one of these? Comment on its issue and see [Contributing](#contributing).
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+## Contributing
+
+NppDev is open source and contributions of every size are welcome, from fixing a typo to adding a language. You don't need to be an expert: issues labelled [**good first issue**](https://github.com/rohithprem18/NppDev/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) are picked to be a friendly start.
+
+1. **Pick an issue** (or open one with your idea) and comment that you're working on it.
+2. **Fork** the repository and create a branch: `git checkout -b feature/my-change`.
+3. **Make your change** and run the checks: `npm run build` and the judge tests (see [Building From Source](#building-from-source)).
+4. **Open a pull request.** CI builds NppDev and runs the judge tests on Ubuntu.
+5. **That's it.** When every check passes, the pull request is **merged automatically**, and your avatar shows up under [Contributors](#contributors).
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for the project layout, coding style, and which files always get a maintainer review. Everyone taking part follows the [Code of Conduct](https://github.com/rohithprem18/.github/blob/main/CODE_OF_CONDUCT.md).
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+## Contributors
+
+Thanks to everyone who has helped build NppDev!
+
+<!-- CONTRIBUTORS:START -->
+<!-- CONTRIBUTORS:END -->
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
