@@ -235,7 +235,7 @@ npx tauri build --bundles deb,appimage     # Ubuntu packages
 cargo test --manifest-path src-tauri/Cargo.toml --lib -- --test-threads=1   # judge tests
 ```
 
-The judge tests compile and run real programs in every installed language and check each verdict. They also run on Ubuntu for every push.
+The judge tests compile and run real programs in every installed language and check each verdict. They also run on Ubuntu for every push and pull request. Working on NppDev? [CONTRIBUTING.md](CONTRIBUTING.md) explains the project layout and how pull requests are handled.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
