@@ -66,6 +66,7 @@ curl -fsSL https://raw.githubusercontent.com/rohithprem18/NppDev/main/install.sh
     <li><a href="#usage">Usage</a></li>
     <li><a href="#languages">Languages</a></li>
     <li><a href="#keyboard-shortcuts">Keyboard Shortcuts</a></li>
+    <li><a href="#troubleshooting">Troubleshooting</a></li>
     <li><a href="#building-from-source">Building From Source</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
@@ -216,6 +217,105 @@ Each file keeps its own Input and Expected output, so switching between problems
 | Format document | <kbd>Shift</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd> |
 | Fold / unfold | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>]</kbd> |
 | Expand selection / jump to bracket | <kbd>Shift</kbd>+<kbd>Alt</kbd>+<kbd>→</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>\</kbd> |
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+## Troubleshooting
+
+The same few questions come up most often: a tool that isn't found, a language server that won't start, or not knowing where NppDev keeps its files. Below: installing compilers, IntelliSense, settings and saved test cases, stale output, verdicts, SQL, build files and updates. If yours isn't here, search the [open issues](https://github.com/rohithprem18/NppDev/issues) or open a new one with the **bug** label — include your OS, the NppDev version (title bar) and what the Output box showed.
+
+**A compiler "isn't found" when I press Ctrl+Enter — what do I do?**
+
+NppDev runs the compilers already on your computer; it doesn't bundle them. Open **Settings** (<kbd>Ctrl</kbd>+<kbd>,</kbd>) > **Languages**: each row shows whether the tool was found (with its version) and, when it wasn't, an install button. On Windows the install runs through winget in a visible window; on Ubuntu the row shows the `sudo apt install ...` command to run yourself, because it needs your password. Kotlin, jdtls (Java IntelliSense) and pylsp are installed by NppDev directly instead. The exact packages per language:
+
+| Language | Windows (winget) | Ubuntu (apt) | Also used for |
+| --- | --- | --- | --- |
+| C / C++ (GCC) | `BrechtSanders.WinLibs.POSIX.UCRT` | `build-essential` | running C and C++ |
+| Java (JDK 21) | `EclipseAdoptium.Temurin.21.JDK` | `openjdk-21-jdk` | running Java, jdtls |
+| Python 3 | `Python.Python.3.13` | `python3` | running Python, pylsp |
+| Node.js | `OpenJS.NodeJS.LTS` | `nodejs` | running JavaScript |
+| Go | `GoLang.Go` | `golang-go` | running Go |
+| Rust | `Rustlang.Rust.GNU` | `rustc` | running Rust |
+| Kotlin | downloaded from JetBrains' releases (needs Java first) | `kotlin` | running Kotlin |
+| C# | — | `mono-mcs` (`csc` on Windows) | running C# |
+| clangd | `LLVM.LLVM` | `clangd` | C/C++ IntelliSense |
+| pylsp | `pip install --user python-lsp-server` (needs Python first) | `python3-pylsp` | Python IntelliSense |
+| jdtls | downloaded from eclipse.org (needs JDK 21+) | — | Java IntelliSense |
+| SQL (SQLite) | built in | built in | running SQL |
+
+Once the row shows *installed*, run your file again. If you installed a compiler by hand into a folder that wasn't on `PATH` when NppDev started, restart NppDev so it picks up the new `PATH`.
+
+**IntelliSense (completions, red squiggles) doesn't start for my language. Why?**
+
+Each language has its own language server, and **Settings > Languages** is the checklist: clangd for C/C++, pylsp for Python (needs `python` on `PATH`; NppDev installs it with `pip install --user python-lsp-server`), jdtls for Java (needs JDK 21 or newer; NppDev downloads it from eclipse.org into its own tools folder), while JavaScript and TypeScript are built into the editor and SQL gets its completions from the built-in database. Open a file of that language — the server starts on first use, and the first start can take a few seconds while it indexes your folder. If you installed the server after NppDev started, re-check the row or restart NppDev.
+
+**Where are my settings stored?**
+
+In one JSON file in NppDev's config folder: `%APPDATA%\dev.rohithprem.nppdev\settings.json` on Windows, `~/.config/dev.rohithprem.nppdev/settings.json` on Ubuntu. It's written to a temporary file first and then moved into place, so a crash can never leave it half-written. The file holds the theme, editor font and size, auto save, the default language for new files, the sidebar width, the recent folders and the per-folder session (open tabs, Input/Output split), plus the version you chose to skip in the update prompt. Your own snippets live next to it, in `snippets.json`.
+
+**Where are the Input / Expected output and the time and memory limits I set for a file?**
+
+In NppDev's data folder, **never inside your project**: `<app data>/tests/<name>.json`, where `<app data>` is `%APPDATA%\dev.rohithprem.nppdev` on Windows and `~/.local/share/dev.rohithprem.nppdev` on Ubuntu, and `<name>` is a fixed hash of the file's lower-cased path (so the same file always finds its tests, whatever slash style or capitalization the path has). The file looks like this:
+
+```json
+{
+  "tests": [{ "input": "3 4\n", "expected": "7\n" }],
+  "timeLimitMs": 1000,
+  "memoryLimitMb": 256
+}
+```
+
+You normally never touch it: the run panel edits it, and saving an empty Input, Expected output and default limits deletes the file again. Deleting the file just resets that file's saved tests and limits.
+
+**My code change didn't seem to run — the output looks stale.**
+
+NppDev compiles **only when the code changed** — the run result tells you whether the compile was served from cache — so a changed file always runs the new code. If you edited the file outside NppDev while auto save was off, save first with <kbd>Ctrl</kbd>+<kbd>S</kbd>. Auto save is on by default and saves a second after you stop typing; turn it off in **Settings** if you prefer. If the compile itself failed, the Output box shows the compiler's message instead of a verdict.
+
+**My program runs forever — how do I stop it?**
+
+The Run button on the tab bar turns into **Stop** while a run is in progress; press it (or <kbd>Ctrl</kbd>+<kbd>Enter</kbd> again) and the run ends with the verdict **Stopped**. The time limit also stops it on its own with **TLE**.
+
+**Wrong Answer, but the Output and Expected output look identical.**
+
+The judge compares line by line: trailing spaces on a line and blank lines at the end are ignored (and `\r\n` counts as `\n`), but a missing space at the *start* of a line, an extra line in the middle, or a different token anywhere is a real difference — the differing lines are marked in the panel. If the Expected output box is empty, the run is judged **OK** (ran fine, nothing to compare against), not AC.
+
+**The verdict says Time Limit Exceeded or Memory Limit Exceeded.**
+
+Your program used more than the limits set for that file — by default 2000 ms and 256 MB. Change them in the run panel next to Input/Output; they are stored per file together with its test cases (see above). The limits apply to the run, not the compile, and a run that exceeds them is stopped.
+
+**My SQL queries changed the sample database and now everything looks wrong.**
+
+That's by design: a `.sql` file runs on NppDev's sample database — one file, `sample.db` in the app's data folder, created from the bundled `sample.sql` on first run — and what your queries change stays changed for the next run. Press **Reset database** (or reset it from the **sample.db** tab) to bring back the original data.
+
+**Does NppDev leave build files in my project folder?**
+
+No. Compiled programs go to `<temp>/nppdev-run/<hash of the source path>` — `%TEMP%\nppdev-run` on Windows, `/tmp/nppdev-run` on Ubuntu — and your project folder keeps only your files. NppDev's own data (settings, snippets, saved tests) lives in the config and data folders described above, also outside your projects.
+
+**My program's output got cut off.**
+
+Output is capped at 4 MB; when it's longer, the Output box ends with "Output is longer than 4 MB; the rest isn't shown." Print less (or loop over a summary), and use the Input box to feed smaller test data.
+
+**The first C++ compile is slow — can it be faster?**
+
+Yes, and it already is after the first time: code that includes `bits/stdc++.h` is compiled against a precompiled header that NppDev prepares once per compiler in the background (C++17 and C++20), which typically makes such compiles about twice as fast. Unchanged code isn't rebuilt at all.
+
+**How do I add my own snippets?**
+
+Your own snippets live in `snippets.json` next to `settings.json` in the config folder (see above). NppDev watches that file, so editing it takes effect immediately; the built-in competitive-programming snippets (`cp`, `fori`, `dsu`, `segtree`, `dijkstra`, ...) are separate and can't be edited, only extended.
+
+**"Open with NppDev" is missing from the right-click menu in File Explorer.**
+
+The installer registers it; run the one-line installer from [Installation](#installation) again to repair the registration. You can always open files from inside NppDev instead: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd> opens a folder, <kbd>Ctrl</kbd>+<kbd>P</kbd> quick-opens any file in it.
+
+**NppDev won't start on Ubuntu — no window opens.**
+
+The desktop app needs WebKitGTK and a tray library, which the `.deb` normally pulls in as dependencies. If you installed from a minimal system or run the `.AppImage` without them, install them yourself: `sudo apt install libwebkit2gtk-4.1-0 libayatana-appindicator3-1`, then start NppDev again. On Windows no extra components are needed — the installer sets up everything.
+
+**How do I update or remove NppDev?**
+
+When a new release is out, NppDev shows a box with **Update now**, **Skip this version** and **Later** — or run the one-line installer from [Installation](#installation) again; it verifies the download against GitHub's SHA-256 and updates in place. You can also grab any version, including the `.AppImage`, from the [releases page](https://github.com/rohithprem18/NppDev/releases). To remove NppDev, use Settings > Apps on Windows or `sudo apt remove npp-dev` on Ubuntu; your settings, snippets and saved tests stay in the folders described above until you delete them yourself.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
