@@ -13,8 +13,7 @@ dist/
 src-tauri/target/
 src-tauri/gen/
 
-# local test page and editor settings
+# local test page
 suggest-test.html
-.claude/
 vite.test.config.ts
 dist-test/
