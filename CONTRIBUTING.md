@@ -33,6 +33,12 @@ npx tauri dev        # opens NppDev and reloads as you edit
 
 For the judge tests, install the compilers you want covered (GCC, a JDK, Python 3, Node.js, Rust, Mono or the .NET csc). Languages that aren't installed are skipped.
 
+## Accessibility
+
+Icon-only buttons must carry an `aria-label` (usually the same text as their `title`), and
+toggle buttons an `aria-pressed`. `node scripts/check-aria-labels.mjs` verifies this over
+`src/components` — please run it before opening a PR.
+
 ## Project layout
 
 ```text
