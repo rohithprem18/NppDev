@@ -1,4 +1,4 @@
-# Checks every pull request: the window code type-checks and builds, and the judge tests pass
+# Pull request checks. # Checks every pull request: the window code type-checks and builds, and the judge tests pass
 # (they compile and run real programs in every installed language and check each verdict).
 # When all of it passes, auto-merge.yml merges the pull request.
 name: CI
